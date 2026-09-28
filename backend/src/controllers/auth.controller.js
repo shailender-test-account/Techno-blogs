@@ -38,14 +38,23 @@ export const AuthController = {
       });
 
       const user = await UserModel.findById(userId);
-      //   const token = generateToken({ id: user.id, role: user.role });
+      const token = generateToken({ id: user.id, role: user.role });
+
+      const cookieOptions = {
+        httpOnly: true,        
+        secure: process.env.NODE_ENV === "production", 
+        sameSite: "none",    
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7
+      
+      };
 
       // ✅ Set token in HTTP-only cookie
-      //   res.cookie(COOKIE_NAME, token, cookieOptions);
+        res.cookie("token", token, cookieOptions);
 
       return res.status(201).json({
         success: true,
         message: "User registered successfully",
+        token
 
 
       });
