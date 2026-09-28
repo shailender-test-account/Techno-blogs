@@ -15,8 +15,23 @@ import paymentrouter from "./routes/payment.routes.js";
 // import { notFound, errorHandler } from "./middlewares/error.middleware.js";
 
 const app = express();
-
-app.use(cors({ origin: "https://techno-blogs-three.vercel.app", credentials: true }));
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://techno-blogs-three.vercel.app" 
+];
+app.use(cors({
+    origin: function (origin, callback) {
+    // allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
