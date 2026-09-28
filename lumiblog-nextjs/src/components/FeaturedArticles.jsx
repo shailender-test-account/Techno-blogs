@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -64,13 +62,225 @@ const normalizeBlog = (blog) => ({
     blog.content
   )}`,
   excerpt: blog.excerpt || "",
+  content: blog.content || "",
+  published_at: blog.published_at || blog.created_at,
 });
 
+/* ─────────────────────────  BLOG DETAIL MODAL  ───────────────────────── */
+function BlogDetailModal({ blog, onClose }) {
+  const [isVisible, setIsVisible] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+
+  useEffect(() => {
+    // Trigger entrance animation
+    requestAnimationFrame(() => setIsVisible(true));
+
+    // Lock body scroll
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKey = (e) => {
+      if (e.key === "Escape") handleClose();
+    };
+    window.addEventListener("keydown", handleKey);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", handleKey);
+    };
+  }, []);
+
+  const handleClose = () => {
+    setIsClosing(true);
+    setIsVisible(false);
+    setTimeout(() => {
+      onClose();
+    }, 350);
+  };
+
+  if (!blog) return null;
+
+  return (
+    <div
+      className={`fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 transition-all duration-300 ${
+        isVisible && !isClosing ? "opacity-100" : "opacity-0"
+      }`}
+    >
+      {/* Backdrop */}
+      <div
+        onClick={handleClose}
+        className={`absolute inset-0 bg-brand-dark/60 backdrop-blur-md transition-all duration-300 ${
+          isVisible && !isClosing ? "opacity-100" : "opacity-0"
+        }`}
+      />
+
+      {/* Modal */}
+      <div
+        className={`relative w-full max-w-3xl max-h-[92vh] overflow-hidden rounded-3xl bg-white shadow-2xl transition-all duration-500 ease-out ${
+          isVisible && !isClosing
+            ? "opacity-100 translate-y-0 scale-100"
+            : "opacity-0 translate-y-8 scale-95"
+        }`}
+      >
+        {/* Close button */}
+        <button
+          onClick={handleClose}
+          className="absolute top-4 right-4 z-30 w-10 h-10 rounded-full bg-white/90 backdrop-blur-md text-brand-dark flex items-center justify-center shadow-lg hover:bg-brand-pink hover:text-white hover:rotate-90 transition-all duration-300"
+          aria-label="Close"
+        >
+          <i className="fa-solid fa-xmark text-lg"></i>
+        </button>
+
+        {/* Scrollable content */}
+        <div className="overflow-y-auto max-h-[92vh] custom-scrollbar">
+          {/* Hero image */}
+          <div className="relative h-56 sm:h-72 w-full overflow-hidden">
+            <img
+              src={blog.image}
+              alt={blog.title}
+              className={`w-full h-full object-cover transition-transform duration-[1.2s] ease-out ${
+                isVisible && !isClosing ? "scale-100" : "scale-110"
+              }`}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+
+            {/* Category badge */}
+            <span
+              className={`absolute top-4 left-4 bg-white/95 backdrop-blur-sm text-brand-pink text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider shadow-lg transition-all duration-500 delay-150 ${
+                isVisible && !isClosing
+                  ? "opacity-100 translate-x-0"
+                  : "opacity-0 -translate-x-4"
+              }`}
+            >
+              {blog.category}
+            </span>
+
+            {/* Title over image */}
+            <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-7">
+              <h2
+                className={`text-xl sm:text-3xl font-bold text-white leading-tight drop-shadow-lg transition-all duration-500 delay-200 ${
+                  isVisible && !isClosing
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 translate-y-4"
+                }`}
+              >
+                {blog.title}
+              </h2>
+            </div>
+          </div>
+
+          {/* Meta bar */}
+          <div
+            className={`flex flex-wrap items-center justify-between gap-4 px-5 sm:px-7 py-4 border-b border-gray-100 transition-all duration-500 delay-300 ${
+              isVisible && !isClosing
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-4"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <img
+                src={blog.author_avatar}
+                alt={blog.author_name}
+                className="w-10 h-10 rounded-full object-cover ring-2 ring-brand-pink/20"
+              />
+              <div>
+                <p className="text-sm font-semibold text-brand-dark">
+                  {blog.author_name}
+                </p>
+                <p className="text-xs text-brand-gray">{blog.meta}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button className="w-9 h-9 rounded-full bg-brand-pink/10 text-brand-pink flex items-center justify-center hover:bg-brand-pink hover:text-white transition-all duration-300">
+                <i className="fa-regular fa-heart text-sm"></i>
+              </button>
+              <button className="w-9 h-9 rounded-full bg-brand-pink/10 text-brand-pink flex items-center justify-center hover:bg-brand-pink hover:text-white transition-all duration-300">
+                <i className="fa-solid fa-share-nodes text-sm"></i>
+              </button>
+              <button className="w-9 h-9 rounded-full bg-brand-pink/10 text-brand-pink flex items-center justify-center hover:bg-brand-pink hover:text-white transition-all duration-300">
+                <i className="fa-regular fa-bookmark text-sm"></i>
+              </button>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div
+            className={`px-5 sm:px-7 py-6 transition-all duration-500 delay-[400ms] ${
+              isVisible && !isClosing
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-4"
+            }`}
+          >
+            {blog.excerpt && (
+              <p className="text-brand-dark/80 text-base sm:text-lg font-medium italic border-l-4 border-brand-pink pl-4 mb-6">
+                {blog.excerpt}
+              </p>
+            )}
+
+            {blog.content ? (
+              <div className="prose prose-sm sm:prose-base max-w-none text-brand-gray leading-relaxed whitespace-pre-line">
+                {blog.content}
+              </div>
+            ) : (
+              <p className="text-brand-gray text-sm">
+                No content available for this article.
+              </p>
+            )}
+
+            {/* Tags / Footer */}
+            <div className="mt-8 pt-6 border-t border-gray-100 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-brand-gray">Tags:</span>
+                {[blog.category, "Story", "Inspiration"].map((tag) => (
+                  <span
+                    key={tag}
+                    className="text-xs font-medium bg-brand-pink/10 text-brand-pink px-3 py-1 rounded-full hover:bg-brand-pink hover:text-white transition-colors cursor-pointer"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+
+              <button
+                onClick={handleClose}
+                className="text-sm font-medium text-brand-pink hover:text-rose-600 transition flex items-center gap-2"
+              >
+                Close article
+                <i className="fa-solid fa-arrow-right text-xs"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Custom scrollbar styles */}
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #f9a8d4;
+          border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #ec4899;
+        }
+      `}</style>
+    </div>
+  );
+}
+
+/* ─────────────────────────  MAIN COMPONENT  ───────────────────────── */
 export default function FeaturedArticles() {
   const dispatch = useDispatch();
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("Lifestyle");
+  const [selectedBlog, setSelectedBlog] = useState(null);
 
   const handleSubscribe = (e) => {
     e.preventDefault();
@@ -79,6 +289,14 @@ export default function FeaturedArticles() {
 
   const handleCategoryClick = (categoryName) => {
     setActiveCategory(categoryName);
+  };
+
+  const openBlogModal = (blog) => {
+    setSelectedBlog(blog);
+  };
+
+  const closeBlogModal = () => {
+    setSelectedBlog(null);
   };
 
   const fetchBlogs = useCallback(async (category) => {
@@ -91,10 +309,9 @@ export default function FeaturedArticles() {
       const rawBlogs = Array.isArray(data)
         ? data
         : Array.isArray(data?.blogs)
-        ? data.blogs
-        : [];
+          ? data.blogs
+          : [];
 
-      // status "published" is mandatory
       const publishedBlogs = rawBlogs
         .filter((b) => b?.status === "published")
         .map(normalizeBlog);
@@ -127,267 +344,284 @@ export default function FeaturedArticles() {
   const card3 = blogs[2];
 
   return (
-    <section className="py-16 sm:py-20 bg-brand-bg w-full rounded-3xl mb-8">
-      <div className="px-4 sm:px-6 lg:px-8 w-full">
-        <Reveal className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 sm:mb-10 gap-4">
-          <div>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-brand-dark">
-              Featured Articles
-            </h2>
-            <p className="text-brand-gray text-xs sm:text-sm mt-1">
-              Showing:{" "}
-              <span className="text-brand-pink font-medium">{activeCategory}</span>
-              {loading && <span className="ml-2 text-brand-gray">• Loading…</span>}
-            </p>
-          </div>
-          <a
-            href="#"
-            className="text-brand-pink font-medium hover:text-rose-600 transition flex items-center gap-2 text-sm sm:text-base"
-          >
-            View all articles{" "}
-            <i className="fa-solid fa-arrow-right text-xs sm:text-sm"></i>
-          </a>
-        </Reveal>
+    <>
+      <section className="py-16 sm:py-20 bg-brand-bg w-full rounded-3xl mb-8">
+        <div className="px-4 sm:px-6 lg:px-8 w-full">
+          <Reveal className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 sm:mb-10 gap-4">
+            <div>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-brand-dark">
+                Featured Articles
+              </h2>
+              <p className="text-brand-gray text-xs sm:text-sm mt-1">
+                Showing:{" "}
+                <span className="text-brand-pink font-medium">
+                  {activeCategory}
+                </span>
+                {loading && (
+                  <span className="ml-2 text-brand-gray">• Loading…</span>
+                )}
+              </p>
+            </div>
+            <a
+              href="#"
+              className="text-brand-pink font-medium hover:text-rose-600 transition flex items-center gap-2 text-sm sm:text-base"
+            >
+              View all articles{" "}
+              <i className="fa-solid fa-arrow-right text-xs sm:text-sm"></i>
+            </a>
+          </Reveal>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 w-full">
-          <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 w-full">
-            {/* Loading skeleton */}
-            {loading &&
-              [0, 1, 2].map((i) => (
-                <div
-                  key={i}
-                  className={`bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 animate-pulse w-full ${
-                    i === 2 ? "sm:col-span-2 h-56" : "h-80"
-                  }`}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 w-full">
+            <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 w-full">
+              {/* Loading skeleton */}
+              {loading &&
+                [0, 1, 2].map((i) => (
+                  <div
+                    key={i}
+                    className={`bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 animate-pulse w-full ${
+                      i === 2 ? "sm:col-span-2 h-56" : "h-80"
+                    }`}
+                  >
+                    <div className="w-full h-full bg-gray-100" />
+                  </div>
+                ))}
+
+              {/* Empty state */}
+              {!loading && blogs.length === 0 && (
+                <div className="sm:col-span-2 bg-white rounded-2xl border border-dashed border-gray-200 p-10 text-center w-full">
+                  <div className="text-4xl text-brand-pink mb-3">
+                    <i className="fa-regular fa-face-frown"></i>
+                  </div>
+                  <h3 className="text-lg font-bold text-brand-dark mb-1">
+                    No articles found
+                  </h3>
+                  <p className="text-brand-gray text-sm">
+                    There are no published articles in{" "}
+                    <span className="font-medium">{activeCategory}</span> yet.
+                  </p>
+                </div>
+              )}
+
+              {/* Card 1 */}
+              {!loading && card1 && (
+                <Reveal
+                  as="article"
+                  onClick={() => openBlogModal(card1)}
+                  className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-gray-100 flex flex-col w-full cursor-pointer"
                 >
-                  <div className="w-full h-full bg-gray-100" />
-                </div>
-              ))}
-
-            {/* Empty state */}
-            {!loading && blogs.length === 0 && (
-              <div className="sm:col-span-2 bg-white rounded-2xl border border-dashed border-gray-200 p-10 text-center w-full">
-                <div className="text-4xl text-brand-pink mb-3">
-                  <i className="fa-regular fa-face-frown"></i>
-                </div>
-                <h3 className="text-lg font-bold text-brand-dark mb-1">
-                  No articles found
-                </h3>
-                <p className="text-brand-gray text-sm">
-                  There are no published articles in{" "}
-                  <span className="font-medium">{activeCategory}</span> yet.
-                </p>
-              </div>
-            )}
-
-            {/* Card 1 */}
-            {!loading && card1 && (
-              <Reveal
-                as="article"
-                className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-gray-100 flex flex-col w-full"
-              >
-                <div className="relative overflow-hidden h-48 sm:h-56">
-                  <img
-                    src={card1.image}
-                    alt={card1.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <span className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-brand-pink text-[10px] sm:text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                    {card1.category}
-                  </span>
-                </div>
-                <div className="p-5 sm:p-6 flex flex-col flex-grow">
-                  <h3 className="text-lg sm:text-xl font-bold mb-3 group-hover:text-brand-pink transition line-clamp-2">
-                    <a href="#">{card1.title}</a>
-                  </h3>
-                  <div className="mt-auto flex items-center justify-between text-[10px] sm:text-xs text-brand-gray">
-                    <span>{card1.meta}</span>
-                    <div className="flex items-center gap-2">
-                      <img
-                        src={card1.author_avatar}
-                        alt={card1.author_name}
-                        className="w-5 h-5 sm:w-6 sm:h-6 rounded-full object-cover"
-                      />
-                      <span className="font-medium text-brand-dark">
-                        {card1.author_name}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </Reveal>
-            )}
-
-            {/* Card 2 */}
-            {!loading && card2 && (
-              <Reveal
-                as="article"
-                className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-gray-100 flex flex-col w-full"
-              >
-                <div className="relative overflow-hidden h-48 sm:h-56">
-                  <img
-                    src={card2.image}
-                    alt={card2.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <span className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-brand-pink text-[10px] sm:text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                    {card2.category}
-                  </span>
-                </div>
-                <div className="p-5 sm:p-6 flex flex-col flex-grow">
-                  <h3 className="text-lg sm:text-xl font-bold mb-3 group-hover:text-brand-pink transition line-clamp-2">
-                    <a href="#">{card2.title}</a>
-                  </h3>
-                  <div className="mt-auto flex items-center justify-between text-[10px] sm:text-xs text-brand-gray">
-                    <span>{card2.meta}</span>
-                    <div className="flex items-center gap-2">
-                      <img
-                        src={card2.author_avatar}
-                        alt={card2.author_name}
-                        className="w-5 h-5 sm:w-6 sm:h-6 rounded-full object-cover"
-                      />
-                      <span className="font-medium text-brand-dark">
-                        {card2.author_name}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </Reveal>
-            )}
-
-            {/* Card 3 — wide */}
-            {!loading && card3 && (
-              <Reveal
-                as="article"
-                className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-gray-100 flex flex-col sm:col-span-2 w-full"
-              >
-                <div className="grid grid-cols-1 sm:grid-cols-2">
-                  <div className="relative overflow-hidden h-48 sm:h-full">
+                  <div className="relative overflow-hidden h-48 sm:h-56">
                     <img
-                      src={card3.image}
-                      alt={card3.title}
+                      src={card1.image}
+                      alt={card1.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     <span className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-brand-pink text-[10px] sm:text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                      {card3.category}
+                      {card1.category}
                     </span>
                   </div>
-                  <div className="p-5 sm:p-6 flex flex-col justify-center">
-                    <h3 className="text-lg sm:text-xl font-bold mb-3 group-hover:text-brand-pink transition">
-                      <a href="#">{card3.title}</a>
+                  <div className="p-5 sm:p-6 flex flex-col flex-grow">
+                    <h3 className="text-lg sm:text-xl font-bold mb-3 group-hover:text-brand-pink transition line-clamp-2">
+                      {card1.title}
                     </h3>
-                    {card3.excerpt && (
-                      <p className="text-brand-gray text-xs sm:text-sm mb-4 sm:mb-6 line-clamp-2">
-                        {card3.excerpt}
-                      </p>
-                    )}
-                    <div className="flex items-center justify-between text-[10px] sm:text-xs text-brand-gray mt-auto">
-                      <span>{card3.meta}</span>
+                    <div className="mt-auto flex items-center justify-between text-[10px] sm:text-xs text-brand-gray">
+                      <span>{card1.meta}</span>
                       <div className="flex items-center gap-2">
                         <img
-                          src={card3.author_avatar}
-                          alt={card3.author_name}
+                          src={card1.author_avatar}
+                          alt={card1.author_name}
                           className="w-5 h-5 sm:w-6 sm:h-6 rounded-full object-cover"
                         />
                         <span className="font-medium text-brand-dark">
-                          {card3.author_name}
+                          {card1.author_name}
                         </span>
                       </div>
                     </div>
                   </div>
-                </div>
-              </Reveal>
-            )}
-          </div>
+                </Reveal>
+              )}
 
-          <Reveal className="space-y-6 sm:space-y-8 w-full">
-            <div className="bg-gradient-to-br from-brand-lightPink to-brand-purpleLight rounded-3xl p-6 sm:p-8 text-center relative overflow-hidden shadow-sm border border-rose-100 w-full">
-              <div className="absolute -top-6 -right-6 text-5xl sm:text-6xl text-white/40 rotate-12">
-                <i className="fa-solid fa-envelope-open-text"></i>
-              </div>
-              <h3 className="text-xl sm:text-2xl font-bold mb-2 relative z-10">
-                Get stories straight to your inbox
-              </h3>
-              <p className="text-brand-gray text-xs sm:text-sm mb-6 relative z-10">
-                Join our community and never miss an inspiring story.
-              </p>
-
-              <form onSubmit={handleSubscribe} className="relative z-10 w-full">
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="w-full px-4 py-3 rounded-xl border border-white/50 focus:border-brand-pink focus:ring-2 focus:ring-brand-pink/20 outline-none text-xs sm:text-sm mb-3 bg-white/80 backdrop-blur-sm"
-                />
-                <button
-                  type="submit"
-                  className="w-full bg-brand-pink hover:bg-rose-600 text-white font-medium py-3 rounded-xl transition shadow-lg shadow-rose-200 text-sm sm:text-base"
+              {/* Card 2 */}
+              {!loading && card2 && (
+                <Reveal
+                  as="article"
+                  onClick={() => openBlogModal(card2)}
+                  className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-gray-100 flex flex-col w-full cursor-pointer"
                 >
-                  Subscribe
-                </button>
-              </form>
-            </div>
-
-            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100 w-full">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg sm:text-xl font-bold">
-                  Popular Categories
-                </h3>
-                <a
-                  href="#"
-                  className="text-brand-pink text-xs sm:text-sm font-medium hover:underline flex items-center gap-1"
-                >
-                  Explore all{" "}
-                  <i className="fa-solid fa-arrow-right text-[10px] sm:text-xs"></i>
-                </a>
-              </div>
-
-              <ul className="space-y-4">
-                {CATEGORIES.map((cat) => {
-                  const isActive =
-                    cat.name.toLowerCase() === activeCategory.toLowerCase();
-                  return (
-                    <li
-                      key={cat.name}
-                      onClick={() => handleCategoryClick(cat.name)}
-                      className={`flex items-center justify-between group cursor-pointer rounded-xl px-3 py-2 transition ${
-                        isActive
-                          ? "bg-brand-pink/5 ring-1 ring-brand-pink/30"
-                          : "hover:bg-gray-50"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-8 h-8 rounded-full flex items-center justify-center group-hover:text-white transition ${
-                            colorClasses[cat.color]
-                          } ${isActive ? "text-white" : ""}`}
-                        >
-                          <i
-                            className={`fa-solid ${cat.icon} text-xs sm:text-sm`}
-                          ></i>
-                        </div>
-                        <span
-                          className={`font-medium transition text-sm sm:text-base ${
-                            isActive
-                              ? "text-brand-pink"
-                              : "text-brand-dark group-hover:text-brand-pink"
-                          }`}
-                        >
-                          {cat.name}
+                  <div className="relative overflow-hidden h-48 sm:h-56">
+                    <img
+                      src={card2.image}
+                      alt={card2.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <span className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-brand-pink text-[10px] sm:text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                      {card2.category}
+                    </span>
+                  </div>
+                  <div className="p-5 sm:p-6 flex flex-col flex-grow">
+                    <h3 className="text-lg sm:text-xl font-bold mb-3 group-hover:text-brand-pink transition line-clamp-2">
+                      {card2.title}
+                    </h3>
+                    <p className="text-brand-gray text-xs sm:text-sm mb-4 sm:mb-6 line-clamp-2">
+                      {card2.excerpt}
+                    </p>
+                    <div className="mt-auto flex items-center justify-between text-[10px] sm:text-xs text-brand-gray">
+                      <span>{card2.meta}</span>
+                      <div className="flex items-center gap-2">
+                        <img
+                          src={card2.author_avatar}
+                          alt={card2.author_name}
+                          className="w-5 h-5 sm:w-6 sm:h-6 rounded-full object-cover"
+                        />
+                        <span className="font-medium text-brand-dark">
+                          {card2.author_name}
                         </span>
                       </div>
-                      <span className="text-[10px] sm:text-xs text-brand-gray bg-gray-50 px-2 py-1 rounded-md">
-                        {cat.count}
+                    </div>
+                  </div>
+                </Reveal>
+              )}
+
+              {/* Card 3 — wide */}
+              {!loading && card3 && (
+                <Reveal
+                  as="article"
+                  onClick={() => openBlogModal(card3)}
+                  className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-gray-100 flex flex-col sm:col-span-2 w-full cursor-pointer"
+                >
+                  <div className="grid grid-cols-1 sm:grid-cols-2">
+                    <div className="relative overflow-hidden h-48 sm:h-full">
+                      <img
+                        src={card3.image}
+                        alt={card3.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <span className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-brand-pink text-[10px] sm:text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                        {card3.category}
                       </span>
-                    </li>
-                  );
-                })}
-              </ul>
+                    </div>
+                    <div className="p-5 sm:p-6 flex flex-col justify-center">
+                      <h3 className="text-lg sm:text-xl font-bold mb-3 group-hover:text-brand-pink transition">
+                        {card3.title}
+                      </h3>
+                      {card3.excerpt && (
+                        <p className="text-brand-gray text-xs sm:text-sm mb-4 sm:mb-6 line-clamp-2">
+                          {card3.excerpt}
+                        </p>
+                      )}
+                      <div className="flex items-center justify-between text-[10px] sm:text-xs text-brand-gray mt-auto">
+                        <span>{card3.meta}</span>
+                        <div className="flex items-center gap-2">
+                          <img
+                            src={card3.author_avatar}
+                            alt={card3.author_name}
+                            className="w-5 h-5 sm:w-6 sm:h-6 rounded-full object-cover"
+                          />
+                          <span className="font-medium text-brand-dark">
+                            {card3.author_name}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Reveal>
+              )}
             </div>
-          </Reveal>
+
+            <Reveal className="space-y-6 sm:space-y-8 w-full">
+              <div className="bg-gradient-to-br from-brand-lightPink to-brand-purpleLight rounded-3xl p-6 sm:p-8 text-center relative overflow-hidden shadow-sm border border-rose-100 w-full">
+                <div className="absolute -top-6 -right-6 text-5xl sm:text-6xl text-white/40 rotate-12">
+                  <i className="fa-solid fa-envelope-open-text"></i>
+                </div>
+                <h3 className="text-xl sm:text-2xl font-bold mb-2 relative z-10">
+                  Get stories straight to your inbox
+                </h3>
+                <p className="text-brand-gray text-xs sm:text-sm mb-6 relative z-10">
+                  Join our community and never miss an inspiring story.
+                </p>
+
+                <form
+                  onSubmit={handleSubscribe}
+                  className="relative z-10 w-full"
+                >
+                  <input
+                    type="email"
+                    placeholder="Enter your email"
+                    className="w-full px-4 py-3 rounded-xl border border-white/50 focus:border-brand-pink focus:ring-2 focus:ring-brand-pink/20 outline-none text-xs sm:text-sm mb-3 bg-white/80 backdrop-blur-sm"
+                  />
+                  <button
+                    type="submit"
+                    className="w-full bg-brand-pink hover:bg-rose-600 text-white font-medium py-3 rounded-xl transition shadow-lg shadow-rose-200 text-sm sm:text-base"
+                  >
+                    Subscribe
+                  </button>
+                </form>
+              </div>
+
+              <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100 w-full">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-lg sm:text-xl font-bold">
+                    Popular Categories
+                  </h3>
+                  <a
+                    href="#"
+                    className="text-brand-pink text-xs sm:text-sm font-medium hover:underline flex items-center gap-1"
+                  >
+                    Explore all{" "}
+                    <i className="fa-solid fa-arrow-right text-[10px] sm:text-xs"></i>
+                  </a>
+                </div>
+
+                <ul className="space-y-4">
+                  {CATEGORIES.map((cat) => {
+                    const isActive =
+                      cat.name.toLowerCase() === activeCategory.toLowerCase();
+                    return (
+                      <li
+                        key={cat.name}
+                        onClick={() => handleCategoryClick(cat.name)}
+                        className={`flex items-center justify-between group cursor-pointer rounded-xl px-3 py-2 transition ${
+                          isActive
+                            ? "bg-brand-pink/5 ring-1 ring-brand-pink/30"
+                            : "hover:bg-gray-50"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-8 h-8 rounded-full flex items-center justify-center group-hover:text-white transition ${
+                              colorClasses[cat.color]
+                            } ${isActive ? "text-white" : ""}`}
+                          >
+                            <i
+                              className={`fa-solid ${cat.icon} text-xs sm:text-sm`}
+                            ></i>
+                          </div>
+                          <span
+                            className={`font-medium transition text-sm sm:text-base ${
+                              isActive
+                                ? "text-brand-pink"
+                                : "text-brand-dark group-hover:text-brand-pink"
+                            }`}
+                          >
+                            {cat.name}
+                          </span>
+                        </div>
+                        <span className="text-[10px] sm:text-xs text-brand-gray bg-gray-50 px-2 py-1 rounded-md">
+                          {cat.count}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            </Reveal>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      {/* Blog detail modal */}
+      {selectedBlog && (
+        <BlogDetailModal blog={selectedBlog} onClose={closeBlogModal} />
+      )}
+    </>
   );
 }
-
-
-
