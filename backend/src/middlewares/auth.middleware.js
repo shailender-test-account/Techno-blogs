@@ -1,4 +1,4 @@
-import { verifyToken, COOKIE_NAME } from "../utils/jwt.js";
+import { verifyToken} from "../utils/jwt.js";
 
 
 export const authMiddleware = (req, res, next) => {
@@ -6,8 +6,8 @@ export const authMiddleware = (req, res, next) => {
     let token = null;
 
     // 1. Cookie
-    if (req.cookies && req.cookies[COOKIE_NAME]) {
-      token = req.cookies[COOKIE_NAME];
+    if (req.cookies && req.cookies["token"]) {
+      token = req.cookies["token"];
     }
 
     // 2. Bearer header
