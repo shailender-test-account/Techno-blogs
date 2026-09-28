@@ -1,30 +1,31 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useDispatch } from "react-redux";
-import axios from "axios";
 import { openModal } from "@/redux/slices/modalSlice";
 import Reveal from "./Reveal";
 import api from "@/axios";
 
-const API_URL = "http://localhost:5000/api/blog/allblogs";
+/* ─────────────────────────── CONSTANTS ─────────────────────────── */
 
 const CATEGORIES = [
-  { name: "Travel", icon: "fa-plane", color: "blue", count: "24 Articles" },
-  { name: "Lifestyle", icon: "fa-mug-hot", color: "pink", count: "32 Articles" },
-  { name: "Wellness", icon: "fa-leaf", color: "green", count: "18 Articles" },
-  { name: "Personal Growth", icon: "fa-book-open", color: "purple", count: "26 Articles" },
-  { name: "Photography", icon: "fa-camera", color: "orange", count: "15 Articles" },
-  { name: "Business", icon: "fa-home", color: "orange", count: "15 Articles" },
+  { name: "Travel",          icon: "fa-plane",     color: "blue"   },
+  { name: "Lifestyle",       icon: "fa-mug-hot",   color: "pink"   },
+  { name: "Wellness",        icon: "fa-leaf",      color: "green"  },
+  { name: "Personal Growth", icon: "fa-book-open", color: "purple" },
+  { name: "Photography",     icon: "fa-camera",    color: "orange" },
+  { name: "Business",        icon: "fa-home",      color: "orange" },
 ];
 
-const colorClasses = {
-  blue: "bg-blue-50 text-blue-500 group-hover:bg-blue-500",
-  pink: "bg-pink-50 text-brand-pink group-hover:bg-brand-pink",
-  green: "bg-green-50 text-green-500 group-hover:bg-green-500",
+const COLOR_CLASSES = {
+  blue:   "bg-blue-50 text-blue-500 group-hover:bg-blue-500",
+  pink:   "bg-pink-50 text-brand-pink group-hover:bg-brand-pink",
+  green:  "bg-green-50 text-green-500 group-hover:bg-green-500",
   purple: "bg-purple-50 text-purple-500 group-hover:bg-purple-500",
   orange: "bg-orange-50 text-orange-500 group-hover:bg-orange-500",
 };
+
+/* ─────────────────────────── HELPERS ─────────────────────────── */
 
 const formatDate = (dateStr) => {
   if (!dateStr) return "";
@@ -41,41 +42,42 @@ const formatDate = (dateStr) => {
 
 const estimateReadTime = (content = "") => {
   const words = content.trim().split(/\s+/).filter(Boolean).length;
-  const minutes = Math.max(1, Math.round(words / 200));
-  return `${minutes} min read`;
+  return `${Math.max(1, Math.round(words / 200))} min read`;
 };
 
 const normalizeBlog = (blog) => ({
-  id: blog.id,
-  title: blog.title,
+  id: blog._id || blog.id,
+  title: blog.title || "Untitled",
   category: blog.category || "Lifestyle",
   image:
     blog.image ||
-    "https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=600&q=80",
-  author_name: blog.author_name || "Unknown",
+    blog.coverImage ||
+    "https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=1200&q=80",
+  author_name:
+    blog.author_name || blog.author?.name || blog.authorName || "Unknown",
   author_avatar:
     blog.author_avatar ||
+    blog.author?.avatar ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(
-      blog.author_name || "A"
+      blog.author_name || blog.author?.name || "A"
     )}&background=random`,
+  excerpt: blog.excerpt || blog.description || "",
+  content: blog.content || "",
   meta: `${formatDate(blog.published_at || blog.created_at)} • ${estimateReadTime(
     blog.content
   )}`,
-  excerpt: blog.excerpt || "",
-  content: blog.content || "",
   published_at: blog.published_at || blog.created_at,
 });
 
-/* ─────────────────────────  BLOG DETAIL MODAL  ───────────────────────── */
+/* ─────────────────────────── BLOG MODAL ─────────────────────────── */
+
 function BlogDetailModal({ blog, onClose }) {
   const [isVisible, setIsVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
 
   useEffect(() => {
-    // Trigger entrance animation
     requestAnimationFrame(() => setIsVisible(true));
 
-    // Lock body scroll
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
@@ -88,66 +90,61 @@ function BlogDetailModal({ blog, onClose }) {
       document.body.style.overflow = originalOverflow;
       window.removeEventListener("keydown", handleKey);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleClose = () => {
     setIsClosing(true);
     setIsVisible(false);
-    setTimeout(() => {
-      onClose();
-    }, 350);
+    setTimeout(() => onClose(), 350);
   };
 
   if (!blog) return null;
+  const active = isVisible && !isClosing;
 
   return (
     <div
-      className={`fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 transition-all duration-300 ${
-        isVisible && !isClosing ? "opacity-100" : "opacity-0"
+      className={`fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 transition-opacity duration-300 ${
+        active ? "opacity-100" : "opacity-0"
       }`}
     >
       {/* Backdrop */}
       <div
         onClick={handleClose}
-        className={`absolute inset-0 bg-brand-dark/60 backdrop-blur-md transition-all duration-300 ${
-          isVisible && !isClosing ? "opacity-100" : "opacity-0"
-        }`}
+        className="absolute inset-0 bg-brand-dark/60 backdrop-blur-md"
       />
 
-      {/* Modal */}
+      {/* Modal card */}
       <div
         className={`relative w-full max-w-3xl max-h-[92vh] overflow-hidden rounded-3xl bg-white shadow-2xl transition-all duration-500 ease-out ${
-          isVisible && !isClosing
+          active
             ? "opacity-100 translate-y-0 scale-100"
             : "opacity-0 translate-y-8 scale-95"
         }`}
       >
-        {/* Close button */}
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 z-30 w-10 h-10 rounded-full bg-white/90 backdrop-blur-md text-brand-dark flex items-center justify-center shadow-lg hover:bg-brand-pink hover:text-white hover:rotate-90 transition-all duration-300"
           aria-label="Close"
+          className="absolute top-4 right-4 z-30 w-10 h-10 rounded-full bg-white/90 backdrop-blur-md text-brand-dark flex items-center justify-center shadow-lg hover:bg-brand-pink hover:text-white hover:rotate-90 transition-all duration-300"
         >
-          <i className="fa-solid fa-xmark text-lg"></i>
+          <i className="fa-solid fa-xmark text-lg" />
         </button>
 
-        {/* Scrollable content */}
         <div className="overflow-y-auto max-h-[92vh] custom-scrollbar">
-          {/* Hero image */}
+          {/* Hero */}
           <div className="relative h-56 sm:h-72 w-full overflow-hidden">
             <img
               src={blog.image}
               alt={blog.title}
               className={`w-full h-full object-cover transition-transform duration-[1.2s] ease-out ${
-                isVisible && !isClosing ? "scale-100" : "scale-110"
+                active ? "scale-100" : "scale-110"
               }`}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
-            {/* Category badge */}
             <span
               className={`absolute top-4 left-4 bg-white/95 backdrop-blur-sm text-brand-pink text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider shadow-lg transition-all duration-500 delay-150 ${
-                isVisible && !isClosing
+                active
                   ? "opacity-100 translate-x-0"
                   : "opacity-0 -translate-x-4"
               }`}
@@ -155,11 +152,10 @@ function BlogDetailModal({ blog, onClose }) {
               {blog.category}
             </span>
 
-            {/* Title over image */}
             <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-7">
               <h2
                 className={`text-xl sm:text-3xl font-bold text-white leading-tight drop-shadow-lg transition-all duration-500 delay-200 ${
-                  isVisible && !isClosing
+                  active
                     ? "opacity-100 translate-y-0"
                     : "opacity-0 translate-y-4"
                 }`}
@@ -169,10 +165,10 @@ function BlogDetailModal({ blog, onClose }) {
             </div>
           </div>
 
-          {/* Meta bar */}
+          {/* Meta */}
           <div
             className={`flex flex-wrap items-center justify-between gap-4 px-5 sm:px-7 py-4 border-b border-gray-100 transition-all duration-500 delay-300 ${
-              isVisible && !isClosing
+              active
                 ? "opacity-100 translate-y-0"
                 : "opacity-0 translate-y-4"
             }`}
@@ -192,25 +188,27 @@ function BlogDetailModal({ blog, onClose }) {
             </div>
 
             <div className="flex items-center gap-2">
-              <button className="w-9 h-9 rounded-full bg-brand-pink/10 text-brand-pink flex items-center justify-center hover:bg-brand-pink hover:text-white transition-all duration-300">
-                <i className="fa-regular fa-heart text-sm"></i>
-              </button>
-              <button className="w-9 h-9 rounded-full bg-brand-pink/10 text-brand-pink flex items-center justify-center hover:bg-brand-pink hover:text-white transition-all duration-300">
-                <i className="fa-solid fa-share-nodes text-sm"></i>
-              </button>
-              <button className="w-9 h-9 rounded-full bg-brand-pink/10 text-brand-pink flex items-center justify-center hover:bg-brand-pink hover:text-white transition-all duration-300">
-                <i className="fa-regular fa-bookmark text-sm"></i>
-              </button>
+              {["fa-regular fa-heart", "fa-solid fa-share-nodes", "fa-regular fa-bookmark"].map(
+                (icon) => (
+                  <button
+                    key={icon}
+                    className="w-9 h-9 rounded-full bg-brand-pink/10 text-brand-pink flex items-center justify-center hover:bg-brand-pink hover:text-white transition-all duration-300"
+                  >
+                    <i className={`${icon} text-sm`} />
+                  </button>
+                )
+              )}
             </div>
           </div>
 
-          {/* Content */}
+          {/* Body */}
           <div
-            className={`px-5 sm:px-7 py-6 transition-all duration-500 delay-[400ms] ${
-              isVisible && !isClosing
+            className={`px-5 sm:px-7 py-6 transition-all duration-500 ${
+              active
                 ? "opacity-100 translate-y-0"
                 : "opacity-0 translate-y-4"
             }`}
+            style={{ transitionDelay: "400ms" }}
           >
             {blog.excerpt && (
               <p className="text-brand-dark/80 text-base sm:text-lg font-medium italic border-l-4 border-brand-pink pl-4 mb-6">
@@ -219,7 +217,7 @@ function BlogDetailModal({ blog, onClose }) {
             )}
 
             {blog.content ? (
-              <div className="prose prose-sm sm:prose-base max-w-none text-brand-gray leading-relaxed whitespace-pre-line">
+              <div className="text-brand-gray leading-relaxed whitespace-pre-line text-sm sm:text-base">
                 {blog.content}
               </div>
             ) : (
@@ -228,7 +226,6 @@ function BlogDetailModal({ blog, onClose }) {
               </p>
             )}
 
-            {/* Tags / Footer */}
             <div className="mt-8 pt-6 border-t border-gray-100 flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs text-brand-gray">Tags:</span>
@@ -247,14 +244,13 @@ function BlogDetailModal({ blog, onClose }) {
                 className="text-sm font-medium text-brand-pink hover:text-rose-600 transition flex items-center gap-2"
               >
                 Close article
-                <i className="fa-solid fa-arrow-right text-xs"></i>
+                <i className="fa-solid fa-arrow-right text-xs" />
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Custom scrollbar styles */}
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 6px;
@@ -274,7 +270,8 @@ function BlogDetailModal({ blog, onClose }) {
   );
 }
 
-/* ─────────────────────────  MAIN COMPONENT  ───────────────────────── */
+/* ─────────────────────────── MAIN COMPONENT ─────────────────────────── */
+
 export default function FeaturedArticles() {
   const dispatch = useDispatch();
   const [blogs, setBlogs] = useState([]);
@@ -282,23 +279,7 @@ export default function FeaturedArticles() {
   const [activeCategory, setActiveCategory] = useState("Lifestyle");
   const [selectedBlog, setSelectedBlog] = useState(null);
 
-  const handleSubscribe = (e) => {
-    e.preventDefault();
-    dispatch(openModal("login"));
-  };
-
-  const handleCategoryClick = (categoryName) => {
-    setActiveCategory(categoryName);
-  };
-
-  const openBlogModal = (blog) => {
-    setSelectedBlog(blog);
-  };
-
-  const closeBlogModal = () => {
-    setSelectedBlog(null);
-  };
-
+  /* Fetch blogs (filtered by category) */
   const fetchBlogs = useCallback(async (category) => {
     try {
       setLoading(true);
@@ -306,17 +287,15 @@ export default function FeaturedArticles() {
         params: { category },
       });
 
-      const rawBlogs = Array.isArray(data)
+      const raw = Array.isArray(data)
         ? data
         : Array.isArray(data?.blogs)
-          ? data.blogs
-          : [];
+        ? data.blogs
+        : [];
 
-      const publishedBlogs = rawBlogs
-        .filter((b) => b?.status === "published")
+      return raw
+        .filter((b) => !b?.status || b.status === "published")
         .map(normalizeBlog);
-
-      return publishedBlogs;
     } catch (err) {
       console.error("Failed to fetch blogs:", err?.message || err);
       return [];
@@ -324,18 +303,16 @@ export default function FeaturedArticles() {
   }, []);
 
   useEffect(() => {
-    let isMounted = true;
-
+    let mounted = true;
     (async () => {
       const result = await fetchBlogs(activeCategory);
-      if (isMounted) {
+      if (mounted) {
         setBlogs(result);
         setLoading(false);
       }
     })();
-
     return () => {
-      isMounted = false;
+      mounted = false;
     };
   }, [activeCategory, fetchBlogs]);
 
@@ -343,10 +320,24 @@ export default function FeaturedArticles() {
   const card2 = blogs[1];
   const card3 = blogs[2];
 
+  const handleSubscribe = (e) => {
+    e.preventDefault();
+    dispatch(openModal("login"));
+  };
+
+  const categoryCounts = useMemo(() => {
+    // You can replace this with real counts if your API provides them
+    return CATEGORIES.reduce((acc, cat) => {
+      acc[cat.name] = blogs.filter((b) => b.category === cat.name).length;
+      return acc;
+    }, {});
+  }, [blogs]);
+
   return (
     <>
       <section className="py-16 sm:py-20 bg-brand-bg w-full rounded-3xl mb-8">
-        <div className="px-4 sm:px-6 lg:px-8 w-full">
+        <div className="px-4 sm:px-6 lg:px-8 w-full max-w-7xl mx-auto">
+          {/* Header */}
           <Reveal className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 sm:mb-10 gap-4">
             <div>
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-brand-dark">
@@ -364,16 +355,18 @@ export default function FeaturedArticles() {
             </div>
             <a
               href="#"
+              onClick={(e) => e.preventDefault()}
               className="text-brand-pink font-medium hover:text-rose-600 transition flex items-center gap-2 text-sm sm:text-base"
             >
               View all articles{" "}
-              <i className="fa-solid fa-arrow-right text-xs sm:text-sm"></i>
+              <i className="fa-solid fa-arrow-right text-xs sm:text-sm" />
             </a>
           </Reveal>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 w-full">
+            {/* LEFT — Cards */}
             <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 w-full">
-              {/* Loading skeleton */}
+              {/* Skeletons */}
               {loading &&
                 [0, 1, 2].map((i) => (
                   <div
@@ -390,7 +383,7 @@ export default function FeaturedArticles() {
               {!loading && blogs.length === 0 && (
                 <div className="sm:col-span-2 bg-white rounded-2xl border border-dashed border-gray-200 p-10 text-center w-full">
                   <div className="text-4xl text-brand-pink mb-3">
-                    <i className="fa-regular fa-face-frown"></i>
+                    <i className="fa-regular fa-face-frown" />
                   </div>
                   <h3 className="text-lg font-bold text-brand-dark mb-1">
                     No articles found
@@ -402,11 +395,11 @@ export default function FeaturedArticles() {
                 </div>
               )}
 
-              {/* Card 1 */}
+              {/* Card 1 (small) */}
               {!loading && card1 && (
                 <Reveal
                   as="article"
-                  onClick={() => openBlogModal(card1)}
+                  onClick={() => setSelectedBlog(card1)}
                   className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-gray-100 flex flex-col w-full cursor-pointer"
                 >
                   <div className="relative overflow-hidden h-48 sm:h-56">
@@ -423,6 +416,11 @@ export default function FeaturedArticles() {
                     <h3 className="text-lg sm:text-xl font-bold mb-3 group-hover:text-brand-pink transition line-clamp-2">
                       {card1.title}
                     </h3>
+                    {card1.excerpt && (
+                      <p className="text-brand-gray text-xs sm:text-sm mb-4 sm:mb-6 line-clamp-2">
+                        {card1.excerpt}
+                      </p>
+                    )}
                     <div className="mt-auto flex items-center justify-between text-[10px] sm:text-xs text-brand-gray">
                       <span>{card1.meta}</span>
                       <div className="flex items-center gap-2">
@@ -440,11 +438,11 @@ export default function FeaturedArticles() {
                 </Reveal>
               )}
 
-              {/* Card 2 */}
+              {/* Card 2 (small) */}
               {!loading && card2 && (
                 <Reveal
                   as="article"
-                  onClick={() => openBlogModal(card2)}
+                  onClick={() => setSelectedBlog(card2)}
                   className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-gray-100 flex flex-col w-full cursor-pointer"
                 >
                   <div className="relative overflow-hidden h-48 sm:h-56">
@@ -461,9 +459,11 @@ export default function FeaturedArticles() {
                     <h3 className="text-lg sm:text-xl font-bold mb-3 group-hover:text-brand-pink transition line-clamp-2">
                       {card2.title}
                     </h3>
-                    <p className="text-brand-gray text-xs sm:text-sm mb-4 sm:mb-6 line-clamp-2">
-                      {card2.excerpt}
-                    </p>
+                    {card2.excerpt && (
+                      <p className="text-brand-gray text-xs sm:text-sm mb-4 sm:mb-6 line-clamp-2">
+                        {card2.excerpt}
+                      </p>
+                    )}
                     <div className="mt-auto flex items-center justify-between text-[10px] sm:text-xs text-brand-gray">
                       <span>{card2.meta}</span>
                       <div className="flex items-center gap-2">
@@ -481,11 +481,11 @@ export default function FeaturedArticles() {
                 </Reveal>
               )}
 
-              {/* Card 3 — wide */}
+              {/* Card 3 (wide) */}
               {!loading && card3 && (
                 <Reveal
                   as="article"
-                  onClick={() => openBlogModal(card3)}
+                  onClick={() => setSelectedBlog(card3)}
                   className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-gray-100 flex flex-col sm:col-span-2 w-full cursor-pointer"
                 >
                   <div className="grid grid-cols-1 sm:grid-cols-2">
@@ -527,10 +527,12 @@ export default function FeaturedArticles() {
               )}
             </div>
 
+            {/* RIGHT — Newsletter + Categories */}
             <Reveal className="space-y-6 sm:space-y-8 w-full">
+              {/* Newsletter */}
               <div className="bg-gradient-to-br from-brand-lightPink to-brand-purpleLight rounded-3xl p-6 sm:p-8 text-center relative overflow-hidden shadow-sm border border-rose-100 w-full">
                 <div className="absolute -top-6 -right-6 text-5xl sm:text-6xl text-white/40 rotate-12">
-                  <i className="fa-solid fa-envelope-open-text"></i>
+                  <i className="fa-solid fa-envelope-open-text" />
                 </div>
                 <h3 className="text-xl sm:text-2xl font-bold mb-2 relative z-10">
                   Get stories straight to your inbox
@@ -557,17 +559,19 @@ export default function FeaturedArticles() {
                 </form>
               </div>
 
+              {/* Categories */}
               <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100 w-full">
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-lg sm:text-xl font-bold">
+                  <h3 className="text-lg sm:text-xl font-bold text-brand-dark">
                     Popular Categories
                   </h3>
                   <a
                     href="#"
+                    onClick={(e) => e.preventDefault()}
                     className="text-brand-pink text-xs sm:text-sm font-medium hover:underline flex items-center gap-1"
                   >
                     Explore all{" "}
-                    <i className="fa-solid fa-arrow-right text-[10px] sm:text-xs"></i>
+                    <i className="fa-solid fa-arrow-right text-[10px] sm:text-xs" />
                   </a>
                 </div>
 
@@ -578,7 +582,7 @@ export default function FeaturedArticles() {
                     return (
                       <li
                         key={cat.name}
-                        onClick={() => handleCategoryClick(cat.name)}
+                        onClick={() => setActiveCategory(cat.name)}
                         className={`flex items-center justify-between group cursor-pointer rounded-xl px-3 py-2 transition ${
                           isActive
                             ? "bg-brand-pink/5 ring-1 ring-brand-pink/30"
@@ -588,12 +592,12 @@ export default function FeaturedArticles() {
                         <div className="flex items-center gap-3">
                           <div
                             className={`w-8 h-8 rounded-full flex items-center justify-center group-hover:text-white transition ${
-                              colorClasses[cat.color]
+                              COLOR_CLASSES[cat.color]
                             } ${isActive ? "text-white" : ""}`}
                           >
                             <i
                               className={`fa-solid ${cat.icon} text-xs sm:text-sm`}
-                            ></i>
+                            />
                           </div>
                           <span
                             className={`font-medium transition text-sm sm:text-base ${
@@ -606,7 +610,7 @@ export default function FeaturedArticles() {
                           </span>
                         </div>
                         <span className="text-[10px] sm:text-xs text-brand-gray bg-gray-50 px-2 py-1 rounded-md">
-                          {cat.count}
+                          {categoryCounts[cat.name] || 0} Articles
                         </span>
                       </li>
                     );
@@ -618,9 +622,12 @@ export default function FeaturedArticles() {
         </div>
       </section>
 
-      {/* Blog detail modal */}
+      {/* Modal */}
       {selectedBlog && (
-        <BlogDetailModal blog={selectedBlog} onClose={closeBlogModal} />
+        <BlogDetailModal
+          blog={selectedBlog}
+          onClose={() => setSelectedBlog(null)}
+        />
       )}
     </>
   );
