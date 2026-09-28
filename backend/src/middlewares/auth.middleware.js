@@ -10,8 +10,12 @@ export const authMiddleware = (req, res, next) => {
       token = req.cookies["token"];
     }
 
+    if(!token){
+      token=localStorage.getItem("token")
+    }
+
     // 2. Bearer header
-    const authHeader = req.headers.authorization;
+    const authHeader = req.headers.authorization ;
     if (!token && authHeader && authHeader.startsWith("Bearer ")) {
       token = authHeader.split(" ")[1];
     }
