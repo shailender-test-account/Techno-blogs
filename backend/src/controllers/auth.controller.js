@@ -87,7 +87,7 @@ export const AuthController = {
       const cookieOptions = {
         httpOnly: true,        // cannot be accessed by JS → protects against XSS
         secure: process.env.NODE_ENV === "production", // HTTPS only in prod
-        sameSite: "strict",    // protects against CSRF
+        sameSite: "none",    // protects against CSRF
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
       
       };

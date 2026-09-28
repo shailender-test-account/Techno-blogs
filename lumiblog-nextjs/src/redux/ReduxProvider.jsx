@@ -22,6 +22,7 @@ function AuthInitializer({ children }) {
       try {
         const response = await api.get(`/api/user/me`, {
           withCredentials: true,
+         
         });
         if (response.data.success) {
 

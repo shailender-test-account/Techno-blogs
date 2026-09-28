@@ -23,6 +23,9 @@ export const authMiddleware = (req, res, next) => {
       });
     }
 
+
+    console.log("my token is",token)
+
     // Verify
     const decoded = verifyToken(token);
     req.user = { id: decoded.id, role: decoded.role };
