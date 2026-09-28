@@ -130,7 +130,7 @@ export const verifyPayment = async (req, res) => {
     });
   } catch (err) {
     console.error("verifyPayment error:", err);
-    return res.status(500).json({ success: false, message: "Verification failed" });
+    return res.status(500).json({ success: false, message: "Verification failed",error:err });
   }
 };
 
