@@ -113,7 +113,7 @@ export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refr
     setDeleting(true);
     try {
       const token = getToken();
-      const { data } = await api.delete(`api/blog/delete/${blog.id}`, {
+      const { data } = await api.delete(`/api/blog/delete/${blog.id}`, {
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
