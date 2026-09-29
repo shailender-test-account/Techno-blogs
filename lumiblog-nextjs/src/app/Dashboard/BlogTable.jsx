@@ -43,11 +43,7 @@ export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refr
     setError(null);
     try {
       const token = getToken();
-      const { data } = await api.get("api/blog/allblogs", {
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      });
+      const { data } = await api.get("/api/blog/allblogs");
 
       if (!data?.success) {
         throw new Error(data?.message || 'Failed to load blogs');
