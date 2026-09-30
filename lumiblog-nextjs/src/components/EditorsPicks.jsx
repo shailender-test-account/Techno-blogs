@@ -97,7 +97,7 @@ function BlogDetailModal({ blog, onClose }) {
           <div className="relative h-56 sm:h-72 w-full overflow-hidden">
             <img
               src={blog.img}
-              alt={blog.title}
+              alt={blog.tag}
               className={`w-full h-full object-cover transition-transform duration-[1.2s] ease-out ${active ? "scale-100" : "scale-110"
                 }`}
             />
@@ -133,8 +133,8 @@ function BlogDetailModal({ blog, onClose }) {
           >
             <div className="flex items-center gap-3">
               <img
-                src={blog.author_avatar}
-                alt={blog.author_name}
+                src={blog.date}
+                alt={blog.read}
                 className="w-10 h-10 rounded-full object-cover ring-2 ring-brand-pink/20"
               />
               <div>
