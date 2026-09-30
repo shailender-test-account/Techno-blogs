@@ -3,8 +3,10 @@
 import Image from "next/image";
 import Reveal from "./Reveal";
 import { openSubscriptionModal } from "@/redux/slices/subscriptionslice";
+import { useDispatch } from "react-redux";
 
 export default function Hero() {
+  const dispatch=useDispatch()
   const handelsubcriptonmodal = () => {
     setTimeout(() => {
       dispatch(openSubscriptionModal());
