@@ -1,16 +1,398 @@
+// 'use client';
+// import { useState, useEffect } from 'react';
+// import axios from 'axios';
+// import { Plus, Eye, SquarePen, Trash2, RefreshCw, Loader2, AlertTriangle } from 'lucide-react';
+// import api from '@/axios';
+
+
+// export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refreshKey }) {
+//   const [blogs, setBlogs] = useState([]);
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState(null);
+//   const [deleteModal, setDeleteModal] = useState({ open: false, blog: null });
+//   const [deleting, setDeleting] = useState(false);
+
+//   const getToken = () =>
+//     typeof window !== 'undefined'
+//       ? localStorage.getItem('token') || localStorage.getItem('authToken')
+//       : null;
+
+//   const formatDate = (dateStr) => {
+//     if (!dateStr) return '—';
+//     try {
+//       return new Date(dateStr).toLocaleDateString('en-US', {
+//         month: 'short',
+//         day: 'numeric',
+//         year: 'numeric',
+//       });
+//     } catch {
+//       return '—';
+//     }
+//   };
+
+//   const makeSlug = (title = '') =>
+//     title
+//       .toLowerCase()
+//       .trim()
+//       .replace(/[^a-z0-9\s-]/g, '')
+//       .replace(/\s+/g, '-')
+//       .slice(0, 40) || 'blog-post';
+
+//   const fetchBlogs = async () => {
+//     setLoading(true);
+//     setError(null);
+//     try {
+//       const token = getToken();
+//       const { data } = await api.get("/api/blog/allblogs");
+
+//       if (!data?.success) {
+//         throw new Error(data?.message || 'Failed to load blogs');
+//       }
+
+//       setBlogs(data.blogs || []);
+//     } catch (err) {
+//       console.error('Error fetching blogs:', err);
+//       const msg =
+//         err.response?.data?.message ||
+//         err.message ||
+//         'Failed to load blogs. Please try again.';
+//       setError(msg);
+//       if (addToast) addToast(msg, 'error');
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   useEffect(() => {
+//     fetchBlogs();
+//     // eslint-disable-next-line react-hooks/exhaustive-deps
+//   }, [refreshKey]);
+
+//   const getStatusBadge = (status) => {
+//     switch (status) {
+//       case 'published':
+//         return (
+//           <span className="bg-green-50 text-green-700 px-2 py-0.5 rounded-full text-[10px] font-medium flex items-center w-fit gap-1">
+//             <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Published
+//           </span>
+//         );
+//       case 'draft':
+//         return (
+//           <span className="bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full text-[10px] font-medium flex items-center w-fit gap-1">
+//             <span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span> Draft
+//           </span>
+//         );
+//       case 'archived':
+//         return (
+//           <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-[10px] font-medium flex items-center w-fit gap-1">
+//             <span className="w-1.5 h-1.5 bg-gray-500 rounded-full"></span> Archived
+//           </span>
+//         );
+//       default:
+//         return (
+//           <span className="bg-gray-50 text-gray-700 px-2 py-0.5 rounded-full text-[10px] font-medium">
+//             {status || 'unknown'}
+//           </span>
+//         );
+//     }
+//   };
+
+//   const openDeleteModal = (blog) => {
+//     setDeleteModal({ open: true, blog });
+//   };
+
+//   const closeDeleteModal = () => {
+//     if (deleting) return;
+//     setDeleteModal({ open: false, blog: null });
+//   };
+
+//   const confirmDelete = async () => {
+//     const blog = deleteModal.blog;
+//     if (!blog) return;
+
+//     setDeleting(true);
+//     try {
+//       const token = getToken();
+//       const { data } = await api.delete(`/api/blog/delete/${blog.id}`, {
+//         headers: {
+//           ...(token ? { Authorization: `Bearer ${token}` } : {}),
+//         },
+//       });
+
+//       if (!data?.success) {
+//         throw new Error(data?.message || 'Failed to delete blog');
+//       }
+
+//       if (addToast) addToast(data?.message || 'Blog deleted successfully', 'success');
+
+//       // Update local state
+//       setBlogs((prev) => prev.filter((b) => b.id !== blog.id));
+
+//       // Also call parent handler if provided
+//       if (onDelete) onDelete(blog.id);
+
+//       setDeleteModal({ open: false, blog: null });
+//     } catch (err) {
+//       console.error('Error deleting blog:', err);
+//       const msg =
+//         err.response?.data?.message ||
+//         err.message ||
+//         'Failed to delete blog. Please try again.';
+//       if (addToast) addToast(msg, 'error');
+//     } finally {
+//       setDeleting(false);
+//     }
+//   };
+
+//   return (
+//     <div className="animate-fade-in-up">
+//       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+//         <div>
+//           <h2 className="text-2xl font-bold text-gray-800">Blog Posts</h2>
+//           <p className="text-sm text-gray-500 mt-1">
+//             Manage all your blog articles here.
+//           </p>
+//         </div>
+//         <div className="mt-4 md:mt-0 flex items-center gap-2">
+//           <button
+//             onClick={fetchBlogs}
+//             disabled={loading}
+//             className="border border-gray-200 text-gray-600 hover:bg-gray-50 px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+//             title="Refresh"
+//           >
+//             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+//             Refresh
+//           </button>
+//           <button
+//             onClick={onAddClick}
+//             className="bg-primary hover:bg-primaryDark text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-all shadow-md flex items-center gap-2"
+//           >
+//             <Plus size={16} /> Add New Post
+//           </button>
+//         </div>
+//       </div>
+
+//       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+//         <div className="overflow-x-auto">
+//           <table className="w-full text-left border-collapse">
+//             <thead>
+//               <tr className="bg-gray-50/80 border-b border-gray-100 text-xs uppercase tracking-wider text-gray-500 font-semibold">
+//                 <th className="px-4 py-3 w-16">#</th>
+//                 <th className="px-4 py-3">Title</th>
+//                 <th className="px-4 py-3">Category</th>
+//                 <th className="px-4 py-3">Status</th>
+//                 <th className="px-4 py-3">Date</th>
+//                 <th className="px-4 py-3 text-right">Actions</th>
+//               </tr>
+//             </thead>
+//             <tbody className="divide-y divide-gray-100 text-sm">
+//               {loading ? (
+//                 <tr>
+//                   <td colSpan={6} className="px-6 py-10 text-center text-gray-400">
+//                     <div className="flex items-center justify-center gap-2">
+//                       <Loader2 size={18} className="animate-spin" />
+//                       <span>Loading blogs...</span>
+//                     </div>
+//                   </td>
+//                 </tr>
+//               ) : error ? (
+//                 <tr>
+//                   <td colSpan={6} className="px-6 py-10 text-center">
+//                     <p className="text-red-500 mb-3">{error}</p>
+//                     <button
+//                       onClick={fetchBlogs}
+//                       className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+//                     >
+//                       Try again
+//                     </button>
+//                   </td>
+//                 </tr>
+//               ) : blogs.length === 0 ? (
+//                 <tr>
+//                   <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
+//                     No records found
+//                   </td>
+//                 </tr>
+//               ) : (
+//                 blogs.map((blog, index) => (
+//                   <tr key={blog.id} className="table-row-hover">
+//                     <td className="px-4 py-3">
+//                       <img
+//                         src={
+//                           blog.image ||
+//                           'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=60'
+//                         }
+//                         alt={blog.title}
+//                         className="w-10 h-10 rounded-lg object-cover border border-gray-200 shadow-sm"
+//                         onError={(e) => {
+//                           e.currentTarget.src =
+//                             'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=60';
+//                         }}
+//                       />
+//                     </td>
+//                     <td className="px-4 py-3">
+//                       <div className="flex flex-col max-w-md">
+//                         <span className="font-medium text-gray-800 line-clamp-1">
+//                           {blog.title}
+//                         </span>
+//                         <span className="text-xs text-gray-400 truncate">
+//                           {blog.slug || makeSlug(blog.title)}
+//                         </span>
+//                       </div>
+//                     </td>
+//                     <td className="px-4 py-3">
+//                       <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full text-[10px] font-medium capitalize">
+//                         {blog.category || '—'}
+//                       </span>
+//                     </td>
+//                     <td className="px-4 py-3">{getStatusBadge(blog.status)}</td>
+//                     <td className="px-4 py-3 text-gray-500 text-xs">
+//                       {formatDate(blog.published_at || blog.created_at)}
+//                     </td>
+//                     <td className="px-4 py-3">
+//                       <div className="flex items-center justify-end gap-2">
+//                         <button
+//                           className="action-btn w-7 h-7 rounded-lg bg-gray-50 text-gray-500 hover:bg-blue-50 hover:text-blue-600 flex items-center justify-center"
+//                           title="View"
+//                         >
+//                           <Eye size={12} />
+//                         </button>
+//                         <button
+//                           onClick={() => onEdit?.(blog)}
+//                           className="action-btn w-7 h-7 rounded-lg bg-gray-50 text-gray-500 hover:bg-amber-50 hover:text-amber-600 flex items-center justify-center"
+//                           title="Edit"
+//                         >
+//                           <SquarePen size={12} />
+//                         </button>
+//                         <button
+//                           onClick={() => openDeleteModal(blog)}
+//                           className="action-btn w-7 h-7 rounded-lg bg-gray-50 text-gray-500 hover:bg-red-50 hover:text-red-600 flex items-center justify-center"
+//                           title="Delete"
+//                         >
+//                           <Trash2 size={12} />
+//                         </button>
+//                       </div>
+//                     </td>
+//                   </tr>
+//                 ))
+//               )}
+//             </tbody>
+//           </table>
+//         </div>
+//       </div>
+
+//       {/* Delete Confirmation Modal */}
+//       {deleteModal.open && (
+//         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+//           {/* Backdrop */}
+//           <div
+//             className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in"
+//             onClick={closeDeleteModal}
+//           />
+
+//           {/* Modal */}
+//           <div className="relative bg-white rounded-2xl shadow-xl max-w-md w-full p-6 animate-fade-in-up">
+//             <div className="flex items-start gap-4">
+//               <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
+//                 <AlertTriangle size={22} className="text-red-500" />
+//               </div>
+//               <div className="flex-1">
+//                 <h3 className="text-lg font-bold text-gray-800">
+//                   Delete Blog Post
+//                 </h3>
+//                 <p className="text-sm text-gray-500 mt-1">
+//                   Are you sure you want to delete this blog post? This action
+//                   cannot be undone.
+//                 </p>
+//                 {deleteModal.blog && (
+//                   <div className="mt-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+//                     <p className="text-sm font-medium text-gray-700 line-clamp-1">
+//                       {deleteModal.blog.title}
+//                     </p>
+//                     <p className="text-xs text-gray-400 mt-0.5 capitalize">
+//                       {deleteModal.blog.category || 'Uncategorized'} •{' '}
+//                       {deleteModal.blog.status || 'unknown'}
+//                     </p>
+//                   </div>
+//                 )}
+//               </div>
+//             </div>
+
+//             <div className="flex items-center justify-end gap-3 mt-6">
+//               <button
+//                 onClick={closeDeleteModal}
+//                 disabled={deleting}
+//                 className="px-4 py-2.5 rounded-xl text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+//               >
+//                 Cancel
+//               </button>
+//               <button
+//                 onClick={confirmDelete}
+//                 disabled={deleting}
+//                 className="px-4 py-2.5 rounded-xl text-sm font-medium text-white bg-red-500 hover:bg-red-600 transition-all shadow-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+//               >
+//                 {deleting ? (
+//                   <>
+//                     <Loader2 size={14} className="animate-spin" />
+//                     Deleting...
+//                   </>
+//                 ) : (
+//                   <>
+//                     <Trash2 size={14} />
+//                     Delete
+//                   </>
+//                 )}
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+//       )}
+//     </div>
+//   );
+// }
+
 'use client';
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Plus, Eye, SquarePen, Trash2, RefreshCw, Loader2, AlertTriangle } from 'lucide-react';
 import api from '@/axios';
-
+import {
+  Plus,
+  Eye,
+  SquarePen,
+  Trash2,
+  RefreshCw,
+  Loader2,
+  AlertTriangle,
+  ThumbsUp,
+  ThumbsDown,
+  Tag,
+  Calendar,
+  Circle,
+  Heading,
+  AlignLeft,
+  Image as ImageIcon,
+  Save,
+  Info,
+  CheckCircle,
+} from 'lucide-react';
 
 export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refreshKey }) {
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [deleteModal, setDeleteModal] = useState({ open: false, blog: null });
+  const [viewModal, setViewModal] = useState({ open: false, blog: null });
+  const [editModal, setEditModal] = useState({ open: false, blog: null });
   const [deleting, setDeleting] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Edit form state
+  const [editForm, setEditForm] = useState({
+    title: '',
+    category: '',
+    status: '',
+    excerpt: '',
+    image: '',
+  });
 
   const getToken = () =>
     typeof window !== 'undefined'
@@ -42,13 +424,10 @@ export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refr
     setLoading(true);
     setError(null);
     try {
-      const token = getToken();
-      const { data } = await api.get("/api/blog/allblogs");
-
+      const { data } = await api.get('/api/blog/allblogs');
       if (!data?.success) {
         throw new Error(data?.message || 'Failed to load blogs');
       }
-
       setBlogs(data.blogs || []);
     } catch (err) {
       console.error('Error fetching blogs:', err);
@@ -68,44 +447,65 @@ export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshKey]);
 
+  // ---------- STATUS BADGE ----------
   const getStatusBadge = (status) => {
     switch (status) {
       case 'published':
         return (
-          <span className="bg-green-50 text-green-700 px-2 py-0.5 rounded-full text-[10px] font-medium flex items-center w-fit gap-1">
-            <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Published
+          <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-[11px] font-semibold">
+            <span className="w-[7px] h-[7px] rounded-full bg-emerald-500" />
+            Published
           </span>
         );
       case 'draft':
         return (
-          <span className="bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full text-[10px] font-medium flex items-center w-fit gap-1">
-            <span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span> Draft
+          <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 px-3 py-1 rounded-full text-[11px] font-semibold">
+            <span className="w-[7px] h-[7px] rounded-full bg-amber-500 animate-dot-blink" />
+            Draft
           </span>
         );
       case 'archived':
         return (
-          <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-[10px] font-medium flex items-center w-fit gap-1">
-            <span className="w-1.5 h-1.5 bg-gray-500 rounded-full"></span> Archived
+          <span className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-[11px] font-semibold">
+            <span className="w-[7px] h-[7px] rounded-full bg-slate-400" />
+            Archived
           </span>
         );
       default:
         return (
-          <span className="bg-gray-50 text-gray-700 px-2 py-0.5 rounded-full text-[10px] font-medium">
+          <span className="inline-flex items-center gap-1.5 bg-slate-50 text-slate-700 px-3 py-1 rounded-full text-[11px] font-semibold capitalize">
+            <span className="w-[7px] h-[7px] rounded-full bg-slate-400" />
             {status || 'unknown'}
           </span>
         );
     }
   };
 
-  const openDeleteModal = (blog) => {
-    setDeleteModal({ open: true, blog });
+  // ---------- OPEN MODALS ----------
+  const openViewModal = (blog) => setViewModal({ open: true, blog });
+  const openEditModal = (blog) => {
+    setEditForm({
+      title: blog.title || '',
+      category: blog.category || '',
+      status: blog.status || 'draft',
+      excerpt: blog.excerpt || '',
+      image: blog.image || '',
+    });
+    setEditModal({ open: true, blog });
   };
+  const openDeleteModal = (blog) => setDeleteModal({ open: true, blog });
 
+  const closeViewModal = () => setViewModal({ open: false, blog: null });
+  const closeEditModal = () => {
+    if (saving) return;
+    setEditModal({ open: false, blog: null });
+  };
   const closeDeleteModal = () => {
     if (deleting) return;
     setDeleteModal({ open: false, blog: null });
   };
 
+  // ---------- CONFIRM DELETE ----------
   const confirmDelete = async () => {
     const blog = deleteModal.blog;
     if (!blog) return;
@@ -124,13 +524,8 @@ export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refr
       }
 
       if (addToast) addToast(data?.message || 'Blog deleted successfully', 'success');
-
-      // Update local state
       setBlogs((prev) => prev.filter((b) => b.id !== blog.id));
-
-      // Also call parent handler if provided
       if (onDelete) onDelete(blog.id);
-
       setDeleteModal({ open: false, blog: null });
     } catch (err) {
       console.error('Error deleting blog:', err);
@@ -144,20 +539,72 @@ export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refr
     }
   };
 
+  // ---------- SAVE EDIT ----------
+  const confirmEdit = async () => {
+    const blog = editModal.blog;
+    if (!blog) return;
+
+    setSaving(true);
+    try {
+      const token = getToken();
+      const payload = {
+        title: editForm.title,
+        category: editForm.category,
+        status: editForm.status,
+        excerpt: editForm.excerpt,
+        image: editForm.image,
+      };
+
+      const { data } = await api.put(`/api/blog/update/${blog.id}`, payload, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      if (!data?.success) {
+        throw new Error(data?.message || 'Failed to update blog');
+      }
+
+      if (addToast) addToast(data?.message || 'Blog updated successfully', 'success');
+
+      // Update local state
+      setBlogs((prev) =>
+        prev.map((b) => (b.id === blog.id ? { ...b, ...payload } : b))
+      );
+
+      setEditModal({ open: false, blog: null });
+    } catch (err) {
+      console.error('Error updating blog:', err);
+      const msg =
+        err.response?.data?.message ||
+        err.message ||
+        'Failed to update blog. Please try again.';
+      if (addToast) addToast(msg, 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="animate-fade-in-up">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+      {/* ---------- HEADER ---------- */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-7">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Blog Posts</h2>
-          <p className="text-sm text-gray-500 mt-1">
-            Manage all your blog articles here.
+          <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+            <span className="bg-blue-50 text-blue-600 p-2.5 rounded-2xl">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>
+            </span>
+            Blog Posts
+          </h2>
+          <p className="text-sm text-slate-500 mt-1.5">
+            Manage all your blog articles, track engagement & publishing status.
           </p>
         </div>
-        <div className="mt-4 md:mt-0 flex items-center gap-2">
+        <div className="mt-4 md:mt-0 flex items-center gap-2.5">
           <button
             onClick={fetchBlogs}
             disabled={loading}
-            className="border border-gray-200 text-gray-600 hover:bg-gray-50 px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300 px-4 py-2.5 rounded-2xl text-sm font-medium transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
             title="Refresh"
           >
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
@@ -165,30 +612,32 @@ export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refr
           </button>
           <button
             onClick={onAddClick}
-            className="bg-primary hover:bg-primaryDark text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-all shadow-md flex items-center gap-2"
+            className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-2xl text-sm font-semibold transition-all shadow-lg shadow-slate-900/20 hover:shadow-slate-900/30 hover:-translate-y-0.5 flex items-center gap-2"
           >
             <Plus size={16} /> Add New Post
           </button>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      {/* ---------- TABLE ---------- */}
+      <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse min-w-[950px] whitespace-nowrap">
             <thead>
-              <tr className="bg-gray-50/80 border-b border-gray-100 text-xs uppercase tracking-wider text-gray-500 font-semibold">
-                <th className="px-4 py-3 w-16">#</th>
-                <th className="px-4 py-3">Title</th>
-                <th className="px-4 py-3">Category</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Date</th>
-                <th className="px-4 py-3 text-right">Actions</th>
+              <tr className="bg-slate-50 border-b border-slate-100 text-[11px] uppercase tracking-wider text-slate-500 font-bold">
+                <th className="px-6 py-4 w-16">#</th>
+                <th className="px-4 py-4">Title</th>
+                <th className="px-4 py-4">Category</th>
+                <th className="px-4 py-4">Status</th>
+                <th className="px-4 py-4">Likes / Dislikes</th>
+                <th className="px-4 py-4">Date</th>
+                <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 text-sm">
+            <tbody className="divide-y divide-slate-100 text-sm">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-gray-400">
+                  <td colSpan={7} className="px-6 py-12 text-center text-slate-400">
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 size={18} className="animate-spin" />
                       <span>Loading blogs...</span>
@@ -197,11 +646,11 @@ export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refr
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center">
+                  <td colSpan={7} className="px-6 py-12 text-center">
                     <p className="text-red-500 mb-3">{error}</p>
                     <button
                       onClick={fetchBlogs}
-                      className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                      className="text-sm text-blue-600 hover:text-blue-800 font-medium"
                     >
                       Try again
                     </button>
@@ -209,67 +658,95 @@ export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refr
                 </tr>
               ) : blogs.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
+                  <td colSpan={7} className="px-6 py-12 text-center text-slate-400">
                     No records found
                   </td>
                 </tr>
               ) : (
                 blogs.map((blog, index) => (
-                  <tr key={blog.id} className="table-row-hover">
-                    <td className="px-4 py-3">
-                      <img
-                        src={
-                          blog.image ||
-                          'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=60'
-                        }
-                        alt={blog.title}
-                        className="w-10 h-10 rounded-lg object-cover border border-gray-200 shadow-sm"
-                        onError={(e) => {
-                          e.currentTarget.src =
-                            'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=60';
-                        }}
-                      />
+                  <tr
+                    key={blog.id}
+                    className="group relative bg-white transition-all duration-300 ease-out hover:bg-gradient-to-r hover:from-white hover:to-blue-50/30 hover:shadow-[0_12px_30px_-12px_rgba(0,0,0,0.15),0_0_0_1px_rgba(59,130,246,0.1)] hover:-translate-y-0.5 hover:scale-[1.001]"
+                  >
+                    {/* Left accent bar on hover */}
+                    <td className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 via-purple-500 to-pink-500 rounded-r opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                    <td className="px-6 py-4">
+                      <span className="font-semibold text-slate-400">
+                        {String(index + 1).padStart(2, '0')}
+                      </span>
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-col max-w-md">
-                        <span className="font-medium text-gray-800 line-clamp-1">
-                          {blog.title}
-                        </span>
-                        <span className="text-xs text-gray-400 truncate">
-                          {blog.slug || makeSlug(blog.title)}
-                        </span>
+                    <td className="px-4 py-4">
+                      <div className="flex items-center gap-3.5">
+                        <img
+                          src={
+                            blog.image ||
+                            'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=60'
+                          }
+                          alt={blog.title}
+                          className="w-10 h-10 rounded-xl object-cover border border-slate-200 shadow-sm transition-transform group-hover:scale-105 group-hover:border-blue-200"
+                          onError={(e) => {
+                            e.currentTarget.src =
+                              'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=60';
+                          }}
+                        />
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-slate-800 line-clamp-1 max-w-[220px]">
+                            {blog.title}
+                          </span>
+                          <span className="text-[11px] text-slate-400 truncate">
+                            {blog.slug || makeSlug(blog.title)}
+                          </span>
+                        </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3">
-                      <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full text-[10px] font-medium capitalize">
+                    <td className="px-4 py-4">
+                      <span className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-[11px] font-semibold capitalize">
+                        <Tag size={10} />
                         {blog.category || '—'}
                       </span>
                     </td>
-                    <td className="px-4 py-3">{getStatusBadge(blog.status)}</td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">
-                      {formatDate(blog.published_at || blog.created_at)}
+                    <td className="px-4 py-4">{getStatusBadge(blog.status)}</td>
+                    <td className="px-4 py-4">
+                      <div className="flex items-center gap-4">
+                        <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-2 py-1 rounded-full text-xs font-semibold">
+                          <ThumbsUp size={12} className="transition-transform hover:scale-125" />
+                          {blog.likes ?? 0}
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 bg-red-50 text-red-700 px-2 py-1 rounded-full text-xs font-semibold">
+                          <ThumbsDown size={12} className="transition-transform hover:scale-125" />
+                          {blog.dislikes ?? 0}
+                        </span>
+                      </div>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-4 text-slate-500 text-xs font-medium">
+                      <span className="inline-flex items-center gap-1.5">
+                        <Calendar size={12} className="text-slate-400" />
+                        {formatDate(blog.published_at || blog.created_at)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
                         <button
-                          className="action-btn w-7 h-7 rounded-lg bg-gray-50 text-gray-500 hover:bg-blue-50 hover:text-blue-600 flex items-center justify-center"
+                          onClick={() => openViewModal(blog)}
+                          className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 hover:border-blue-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-200/50 transition-all flex items-center justify-center"
                           title="View"
                         >
-                          <Eye size={12} />
+                          <Eye size={15} />
                         </button>
                         <button
-                          onClick={() => onEdit?.(blog)}
-                          className="action-btn w-7 h-7 rounded-lg bg-gray-50 text-gray-500 hover:bg-amber-50 hover:text-amber-600 flex items-center justify-center"
+                          onClick={() => openEditModal(blog)}
+                          className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100 hover:border-amber-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-amber-200/50 transition-all flex items-center justify-center"
                           title="Edit"
                         >
-                          <SquarePen size={12} />
+                          <SquarePen size={15} />
                         </button>
                         <button
                           onClick={() => openDeleteModal(blog)}
-                          className="action-btn w-7 h-7 rounded-lg bg-gray-50 text-gray-500 hover:bg-red-50 hover:text-red-600 flex items-center justify-center"
+                          className="w-9 h-9 rounded-xl bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 hover:border-red-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-red-200/50 transition-all flex items-center justify-center"
                           title="Delete"
                         >
-                          <Trash2 size={12} />
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     </td>
@@ -281,38 +758,187 @@ export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refr
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
-      {deleteModal.open && (
+      {/* ========== VIEW MODAL ========== */}
+      {viewModal.open && viewModal.blog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in"
-            onClick={closeDeleteModal}
+            className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm animate-fade-in"
+            onClick={closeViewModal}
           />
-
-          {/* Modal */}
-          <div className="relative bg-white rounded-2xl shadow-xl max-w-md w-full p-6 animate-fade-in-up">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
-                <AlertTriangle size={22} className="text-red-500" />
+          <div className="relative bg-white rounded-3xl shadow-2xl max-w-lg w-full p-7 animate-modal-in max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center gap-4 mb-5">
+              <div className="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+                <Eye size={26} className="text-blue-600" />
               </div>
+              <div>
+                <h3 className="text-xl font-bold text-slate-800">View Post</h3>
+                <p className="text-sm text-slate-500">Preview details</p>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 flex items-center gap-4">
+              <img
+                src={viewModal.blog.image}
+                alt={viewModal.blog.title}
+                className="w-16 h-16 rounded-2xl object-cover border border-slate-200"
+                onError={(e) => {
+                  e.currentTarget.src =
+                    'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=60';
+                }}
+              />
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-gray-800">
-                  Delete Blog Post
-                </h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  Are you sure you want to delete this blog post? This action
-                  cannot be undone.
-                </p>
-                {deleteModal.blog && (
-                  <div className="mt-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
-                    <p className="text-sm font-medium text-gray-700 line-clamp-1">
-                      {deleteModal.blog.title}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-0.5 capitalize">
-                      {deleteModal.blog.category || 'Uncategorized'} •{' '}
-                      {deleteModal.blog.status || 'unknown'}
-                    </p>
+                <div className="font-bold text-slate-800 text-base">
+                  {viewModal.blog.title}
+                </div>
+                <div className="flex items-center gap-3 mt-1.5 text-xs text-slate-500">
+                  <span className="inline-flex items-center gap-1">
+                    <Tag size={10} /> {viewModal.blog.category || '—'}
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <Calendar size={10} />
+                    {formatDate(viewModal.blog.published_at || viewModal.blog.created_at)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-4 mt-2.5">
+                  <span className="inline-flex items-center gap-1 text-emerald-600 font-semibold text-xs">
+                    <ThumbsUp size={12} /> {viewModal.blog.likes ?? 0}
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-red-600 font-semibold text-xs">
+                    <ThumbsDown size={12} /> {viewModal.blog.dislikes ?? 0}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {viewModal.blog.excerpt && (
+              <p className="mt-4 text-sm text-slate-600 leading-relaxed">
+                {viewModal.blog.excerpt}
+              </p>
+            )}
+
+            <div className="flex items-center justify-end gap-3 mt-6">
+              <button
+                onClick={closeViewModal}
+                className="px-5 py-2.5 rounded-2xl text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  const b = viewModal.blog;
+                  closeViewModal();
+                  setTimeout(() => openEditModal(b), 200);
+                }}
+                className="px-5 py-2.5 rounded-2xl text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 transition-all shadow-md hover:-translate-y-0.5 flex items-center gap-2"
+              >
+                <SquarePen size={14} /> Edit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========== EDIT MODAL ========== */}
+      {editModal.open && editModal.blog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm animate-fade-in"
+            onClick={closeEditModal}
+          />
+          <div className="relative bg-white rounded-3xl shadow-2xl max-w-xl w-full p-7 animate-modal-in max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center gap-4 mb-5">
+              <div className="w-14 h-14 rounded-2xl bg-amber-100 flex items-center justify-center flex-shrink-0">
+                <SquarePen size={26} className="text-amber-600" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-slate-800">Edit Post</h3>
+                <p className="text-sm text-slate-500">Update blog information</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                  <Heading size={12} className="text-blue-500" /> Title
+                </label>
+                <input
+                  type="text"
+                  value={editForm.title}
+                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                  placeholder="Blog title"
+                  className="px-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none text-sm text-slate-800 transition-all"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                    <Tag size={12} className="text-blue-500" /> Category
+                  </label>
+                  <select
+                    value={editForm.category}
+                    onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+                    className="px-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none text-sm text-slate-800 transition-all bg-white"
+                  >
+                    <option value="">Select category</option>
+                    <option value="Design">Design</option>
+                    <option value="Development">Development</option>
+                    <option value="AI & Tech">AI & Tech</option>
+                    <option value="Marketing">Marketing</option>
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                    <Circle size={12} className="text-blue-500" /> Status
+                  </label>
+                  <select
+                    value={editForm.status}
+                    onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                    className="px-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none text-sm text-slate-800 transition-all bg-white"
+                  >
+                    <option value="published">Published</option>
+                    <option value="draft">Draft</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                  <AlignLeft size={12} className="text-blue-500" /> Excerpt
+                </label>
+                <textarea
+                  value={editForm.excerpt}
+                  onChange={(e) => setEditForm({ ...editForm, excerpt: e.target.value })}
+                  placeholder="Short description..."
+                  rows={3}
+                  className="px-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none text-sm text-slate-800 transition-all resize-y"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                  <ImageIcon size={12} className="text-blue-500" /> Image URL
+                </label>
+                <input
+                  type="text"
+                  value={editForm.image}
+                  onChange={(e) => setEditForm({ ...editForm, image: e.target.value })}
+                  placeholder="https://..."
+                  className="px-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none text-sm text-slate-800 transition-all"
+                />
+                {editForm.image && (
+                  <div className="flex items-center gap-3 mt-1.5">
+                    <img
+                      src={editForm.image}
+                      alt="preview"
+                      className="w-12 h-12 rounded-xl object-cover border border-slate-200"
+                      onError={(e) => {
+                        e.currentTarget.src =
+                          'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=60';
+                      }}
+                    />
+                    <span className="text-xs text-slate-500">Current image</span>
                   </div>
                 )}
               </div>
@@ -320,26 +946,24 @@ export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refr
 
             <div className="flex items-center justify-end gap-3 mt-6">
               <button
-                onClick={closeDeleteModal}
-                disabled={deleting}
-                className="px-4 py-2.5 rounded-xl text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={closeEditModal}
+                disabled={saving}
+                className="px-5 py-2.5 rounded-2xl text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
-                onClick={confirmDelete}
-                disabled={deleting}
-                className="px-4 py-2.5 rounded-xl text-sm font-medium text-white bg-red-500 hover:bg-red-600 transition-all shadow-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={confirmEdit}
+                disabled={saving}
+                className="px-5 py-2.5 rounded-2xl text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 transition-all shadow-md hover:-translate-y-0.5 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {deleting ? (
+                {saving ? (
                   <>
-                    <Loader2 size={14} className="animate-spin" />
-                    Deleting...
+                    <Loader2 size={14} className="animate-spin" /> Saving...
                   </>
                 ) : (
                   <>
-                    <Trash2 size={14} />
-                    Delete
+                    <Save size={14} /> Save changes
                   </>
                 )}
               </button>
@@ -347,6 +971,134 @@ export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refr
           </div>
         </div>
       )}
+
+      {/* ========== DELETE MODAL ========== */}
+      {deleteModal.open && deleteModal.blog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm animate-fade-in"
+            onClick={closeDeleteModal}
+          />
+          <div className="relative bg-white rounded-3xl shadow-2xl max-w-md w-full p-7 animate-modal-in">
+            <div className="flex items-start gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-red-100 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle size={26} className="text-red-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-slate-800">Delete Post</h3>
+                <p className="text-sm text-slate-500 mt-1">
+                  Are you sure you want to delete this blog post? This action cannot
+                  be undone.
+                </p>
+                <div className="mt-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-3">
+                  <img
+                    src={deleteModal.blog.image}
+                    alt={deleteModal.blog.title}
+                    className="w-12 h-12 rounded-xl object-cover border border-slate-200"
+                    onError={(e) => {
+                      e.currentTarget.src =
+                        'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=60';
+                    }}
+                  />
+                  <div>
+                    <p className="text-sm font-semibold text-slate-700 line-clamp-1">
+                      {deleteModal.blog.title}
+                    </p>
+                    <p className="text-xs text-slate-400 mt-0.5 capitalize flex items-center gap-2">
+                      <span>{deleteModal.blog.category || 'Uncategorized'}</span>
+                      <span>•</span>
+                      <span>{deleteModal.blog.status || 'unknown'}</span>
+                    </p>
+                  </div>
+                </div>
+                <p className="mt-4 text-sm text-red-700 font-medium flex items-center gap-2">
+                  <Info size={14} /> This will permanently remove the post.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 mt-6">
+              <button
+                onClick={closeDeleteModal}
+                disabled={deleting}
+                className="px-5 py-2.5 rounded-2xl text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={deleting}
+                className="px-5 py-2.5 rounded-2xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all shadow-md hover:-translate-y-0.5 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deleting ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" /> Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={14} /> Delete
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---------- CUSTOM CSS (blink dot + animations) ---------- */}
+      <style jsx global>{`
+        @keyframes dotBlink {
+          0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+          }
+          50% {
+            opacity: 0.45;
+            transform: scale(0.78);
+            box-shadow: 0 0 0 5px rgba(245, 158, 11, 0);
+          }
+        }
+        .animate-dot-blink {
+          animation: dotBlink 1.4s ease-in-out infinite;
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .animate-fade-in {
+          animation: fadeIn 0.25s ease-out;
+        }
+
+        @keyframes modalIn {
+          from {
+            opacity: 0;
+            transform: scale(0.92) translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+        .animate-modal-in {
+          animation: modalIn 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+        }
+
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(15px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fade-in-up {
+          animation: fadeInUp 0.4s ease-out;
+        }
+      `}</style>
     </div>
   );
 }

@@ -1,5 +1,7 @@
 'use client';
 
+import Link from "next/link";
+
 export default function SubTable({ subs, onDelete, onEdit, onSwitchToAdd }) {
   const getStatusBadge = (status) => {
     switch (status) {
@@ -37,12 +39,12 @@ export default function SubTable({ subs, onDelete, onEdit, onSwitchToAdd }) {
           <h2 className="text-2xl font-bold text-gray-800">Subscription List</h2>
           <p className="text-sm text-gray-500 mt-1">Manage all user subscriptions and payments.</p>
         </div>
-        <button
-          onClick={onSwitchToAdd}
+        <Link
+          href={"/Dashboard/add-subscription"}
           className="mt-4 md:mt-0 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-all shadow-md hover:shadow-lg flex items-center gap-2"
         >
           <i className="fa-solid fa-plus"></i> Add Subscription
-        </button>
+        </Link>
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
