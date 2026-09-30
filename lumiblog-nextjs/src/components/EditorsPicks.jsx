@@ -96,7 +96,7 @@ function BlogDetailModal({ blog, onClose }) {
           {/* Hero */}
           <div className="relative h-56 sm:h-72 w-full overflow-hidden">
             <img
-              src={blog.image}
+              src={blog.img}
               alt={blog.title}
               className={`w-full h-full object-cover transition-transform duration-[1.2s] ease-out ${active ? "scale-100" : "scale-110"
                 }`}
