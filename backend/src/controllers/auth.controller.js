@@ -34,6 +34,7 @@ export const AuthController = {
       const userId = await UserModel.create({
         name,
         email,
+        role,
         password: hashedPassword,
       });
 
