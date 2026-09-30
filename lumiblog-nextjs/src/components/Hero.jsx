@@ -2,8 +2,14 @@
 
 import Image from "next/image";
 import Reveal from "./Reveal";
+import { openSubscriptionModal } from "@/redux/slices/subscriptionslice";
 
 export default function Hero() {
+  const handelsubcriptonmodal = () => {
+    setTimeout(() => {
+      dispatch(openSubscriptionModal());
+    }, 2500 + 300);
+  }
   return (
     <section className="relative pt-28 lg:pt-32 pb-8 w-full min-h-[calc(100vh-6rem)] flex items-center">
       <div className="absolute top-10 left-0 w-64 md:w-96 h-64 md:h-96 bg-brand-lightPink rounded-full blur-3xl opacity-60 -z-10 animate-float"></div>
@@ -28,7 +34,7 @@ export default function Hero() {
             </p>
 
             <div className="flex flex-wrap items-center gap-4 mb-8 lg:mb-10">
-              <button className="bg-brand-pink hover:bg-rose-600 text-white px-6 sm:px-8 py-3.5 rounded-full font-medium transition shadow-lg shadow-rose-200 hover:shadow-rose-300 transform hover:-translate-y-0.5 flex items-center gap-2 text-sm sm:text-base">
+              <button onClick={handelsubcriptonmodal} className="bg-brand-pink hover:bg-rose-600 text-white px-6 sm:px-8 py-3.5 rounded-full font-medium transition shadow-lg shadow-rose-200 hover:shadow-rose-300 transform hover:-translate-y-0.5 flex items-center gap-2 text-sm sm:text-base">
                 Explore Articles <i className="fa-solid fa-arrow-right text-sm"></i>
               </button>
 
