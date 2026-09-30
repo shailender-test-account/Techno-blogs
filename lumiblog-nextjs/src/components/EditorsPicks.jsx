@@ -355,12 +355,7 @@ export default function EditorsPicks() {
           </Reveal>
         </div>
       </section>
-      {selectedBlog && (
-        <BlogDetailModal
-          blog={selectedBlog}
-          onClose={() => setSelectedBlog(null)}
-        />
-      )}
+      
     </>
 
   );
