@@ -555,11 +555,7 @@ export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refr
         image: editForm.image,
       };
 
-      const { data } = await api.put(`/api/blog/update/${blog.id}`, payload, {
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      });
+      const { data } = await api.put(`/api/blog/update/${blog.id}`, payload);
 
       if (!data?.success) {
         throw new Error(data?.message || 'Failed to update blog');
