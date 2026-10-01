@@ -315,14 +315,14 @@ export default function BlogForm({ onAddBlog, addToast }) {
               }`}
             >
               <option value="">Select Category</option>
+              <option value="Travel">Travel</option>
               <option value="Technology">Technology</option>
-              <option value="Education">Education</option>
               <option value="Lifestyle">Lifestyle</option>
               <option value="Business">Business</option>
               <option value="Wellness">Wellness</option>
               <option value="Photography">Photography</option>
-              <option value="Photography">Personal Growth</option>
-              <option value="Photography">Travel</option>
+              <option value="Personal Growth">Personal Growth</option>
+             
             
 
 
