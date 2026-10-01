@@ -374,6 +374,7 @@ import {
   Info,
   CheckCircle,
 } from 'lucide-react';
+import Link from 'next/link';
 
 export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refreshKey }) {
   const [blogs, setBlogs] = useState([]);
@@ -606,12 +607,12 @@ export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refr
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
             Refresh
           </button>
-          <button
-            onClick={onAddClick}
+          <Link
+            href={"/Dashboard/add-blog"}
             className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-2xl text-sm font-semibold transition-all shadow-lg shadow-slate-900/20 hover:shadow-slate-900/30 hover:-translate-y-0.5 flex items-center gap-2"
           >
             <Plus size={16} /> Add New Post
-          </button>
+          </Link>
         </div>
       </div>
 
