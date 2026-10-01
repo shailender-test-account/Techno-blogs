@@ -1,356 +1,3 @@
-// 'use client';
-// import { useState, useEffect } from 'react';
-// import axios from 'axios';
-// import { Plus, Eye, SquarePen, Trash2, RefreshCw, Loader2, AlertTriangle } from 'lucide-react';
-// import api from '@/axios';
-
-
-// export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refreshKey }) {
-//   const [blogs, setBlogs] = useState([]);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState(null);
-//   const [deleteModal, setDeleteModal] = useState({ open: false, blog: null });
-//   const [deleting, setDeleting] = useState(false);
-
-//   const getToken = () =>
-//     typeof window !== 'undefined'
-//       ? localStorage.getItem('token') || localStorage.getItem('authToken')
-//       : null;
-
-//   const formatDate = (dateStr) => {
-//     if (!dateStr) return '—';
-//     try {
-//       return new Date(dateStr).toLocaleDateString('en-US', {
-//         month: 'short',
-//         day: 'numeric',
-//         year: 'numeric',
-//       });
-//     } catch {
-//       return '—';
-//     }
-//   };
-
-//   const makeSlug = (title = '') =>
-//     title
-//       .toLowerCase()
-//       .trim()
-//       .replace(/[^a-z0-9\s-]/g, '')
-//       .replace(/\s+/g, '-')
-//       .slice(0, 40) || 'blog-post';
-
-//   const fetchBlogs = async () => {
-//     setLoading(true);
-//     setError(null);
-//     try {
-//       const token = getToken();
-//       const { data } = await api.get("/api/blog/allblogs");
-
-//       if (!data?.success) {
-//         throw new Error(data?.message || 'Failed to load blogs');
-//       }
-
-//       setBlogs(data.blogs || []);
-//     } catch (err) {
-//       console.error('Error fetching blogs:', err);
-//       const msg =
-//         err.response?.data?.message ||
-//         err.message ||
-//         'Failed to load blogs. Please try again.';
-//       setError(msg);
-//       if (addToast) addToast(msg, 'error');
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   useEffect(() => {
-//     fetchBlogs();
-//     // eslint-disable-next-line react-hooks/exhaustive-deps
-//   }, [refreshKey]);
-
-//   const getStatusBadge = (status) => {
-//     switch (status) {
-//       case 'published':
-//         return (
-//           <span className="bg-green-50 text-green-700 px-2 py-0.5 rounded-full text-[10px] font-medium flex items-center w-fit gap-1">
-//             <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Published
-//           </span>
-//         );
-//       case 'draft':
-//         return (
-//           <span className="bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full text-[10px] font-medium flex items-center w-fit gap-1">
-//             <span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span> Draft
-//           </span>
-//         );
-//       case 'archived':
-//         return (
-//           <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-[10px] font-medium flex items-center w-fit gap-1">
-//             <span className="w-1.5 h-1.5 bg-gray-500 rounded-full"></span> Archived
-//           </span>
-//         );
-//       default:
-//         return (
-//           <span className="bg-gray-50 text-gray-700 px-2 py-0.5 rounded-full text-[10px] font-medium">
-//             {status || 'unknown'}
-//           </span>
-//         );
-//     }
-//   };
-
-//   const openDeleteModal = (blog) => {
-//     setDeleteModal({ open: true, blog });
-//   };
-
-//   const closeDeleteModal = () => {
-//     if (deleting) return;
-//     setDeleteModal({ open: false, blog: null });
-//   };
-
-//   const confirmDelete = async () => {
-//     const blog = deleteModal.blog;
-//     if (!blog) return;
-
-//     setDeleting(true);
-//     try {
-//       const token = getToken();
-//       const { data } = await api.delete(`/api/blog/delete/${blog.id}`, {
-//         headers: {
-//           ...(token ? { Authorization: `Bearer ${token}` } : {}),
-//         },
-//       });
-
-//       if (!data?.success) {
-//         throw new Error(data?.message || 'Failed to delete blog');
-//       }
-
-//       if (addToast) addToast(data?.message || 'Blog deleted successfully', 'success');
-
-//       // Update local state
-//       setBlogs((prev) => prev.filter((b) => b.id !== blog.id));
-
-//       // Also call parent handler if provided
-//       if (onDelete) onDelete(blog.id);
-
-//       setDeleteModal({ open: false, blog: null });
-//     } catch (err) {
-//       console.error('Error deleting blog:', err);
-//       const msg =
-//         err.response?.data?.message ||
-//         err.message ||
-//         'Failed to delete blog. Please try again.';
-//       if (addToast) addToast(msg, 'error');
-//     } finally {
-//       setDeleting(false);
-//     }
-//   };
-
-//   return (
-//     <div className="animate-fade-in-up">
-//       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-//         <div>
-//           <h2 className="text-2xl font-bold text-gray-800">Blog Posts</h2>
-//           <p className="text-sm text-gray-500 mt-1">
-//             Manage all your blog articles here.
-//           </p>
-//         </div>
-//         <div className="mt-4 md:mt-0 flex items-center gap-2">
-//           <button
-//             onClick={fetchBlogs}
-//             disabled={loading}
-//             className="border border-gray-200 text-gray-600 hover:bg-gray-50 px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-//             title="Refresh"
-//           >
-//             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-//             Refresh
-//           </button>
-//           <button
-//             onClick={onAddClick}
-//             className="bg-primary hover:bg-primaryDark text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-all shadow-md flex items-center gap-2"
-//           >
-//             <Plus size={16} /> Add New Post
-//           </button>
-//         </div>
-//       </div>
-
-//       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-//         <div className="overflow-x-auto">
-//           <table className="w-full text-left border-collapse">
-//             <thead>
-//               <tr className="bg-gray-50/80 border-b border-gray-100 text-xs uppercase tracking-wider text-gray-500 font-semibold">
-//                 <th className="px-4 py-3 w-16">#</th>
-//                 <th className="px-4 py-3">Title</th>
-//                 <th className="px-4 py-3">Category</th>
-//                 <th className="px-4 py-3">Status</th>
-//                 <th className="px-4 py-3">Date</th>
-//                 <th className="px-4 py-3 text-right">Actions</th>
-//               </tr>
-//             </thead>
-//             <tbody className="divide-y divide-gray-100 text-sm">
-//               {loading ? (
-//                 <tr>
-//                   <td colSpan={6} className="px-6 py-10 text-center text-gray-400">
-//                     <div className="flex items-center justify-center gap-2">
-//                       <Loader2 size={18} className="animate-spin" />
-//                       <span>Loading blogs...</span>
-//                     </div>
-//                   </td>
-//                 </tr>
-//               ) : error ? (
-//                 <tr>
-//                   <td colSpan={6} className="px-6 py-10 text-center">
-//                     <p className="text-red-500 mb-3">{error}</p>
-//                     <button
-//                       onClick={fetchBlogs}
-//                       className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
-//                     >
-//                       Try again
-//                     </button>
-//                   </td>
-//                 </tr>
-//               ) : blogs.length === 0 ? (
-//                 <tr>
-//                   <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
-//                     No records found
-//                   </td>
-//                 </tr>
-//               ) : (
-//                 blogs.map((blog, index) => (
-//                   <tr key={blog.id} className="table-row-hover">
-//                     <td className="px-4 py-3">
-//                       <img
-//                         src={
-//                           blog.image ||
-//                           'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=60'
-//                         }
-//                         alt={blog.title}
-//                         className="w-10 h-10 rounded-lg object-cover border border-gray-200 shadow-sm"
-//                         onError={(e) => {
-//                           e.currentTarget.src =
-//                             'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=60';
-//                         }}
-//                       />
-//                     </td>
-//                     <td className="px-4 py-3">
-//                       <div className="flex flex-col max-w-md">
-//                         <span className="font-medium text-gray-800 line-clamp-1">
-//                           {blog.title}
-//                         </span>
-//                         <span className="text-xs text-gray-400 truncate">
-//                           {blog.slug || makeSlug(blog.title)}
-//                         </span>
-//                       </div>
-//                     </td>
-//                     <td className="px-4 py-3">
-//                       <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full text-[10px] font-medium capitalize">
-//                         {blog.category || '—'}
-//                       </span>
-//                     </td>
-//                     <td className="px-4 py-3">{getStatusBadge(blog.status)}</td>
-//                     <td className="px-4 py-3 text-gray-500 text-xs">
-//                       {formatDate(blog.published_at || blog.created_at)}
-//                     </td>
-//                     <td className="px-4 py-3">
-//                       <div className="flex items-center justify-end gap-2">
-//                         <button
-//                           className="action-btn w-7 h-7 rounded-lg bg-gray-50 text-gray-500 hover:bg-blue-50 hover:text-blue-600 flex items-center justify-center"
-//                           title="View"
-//                         >
-//                           <Eye size={12} />
-//                         </button>
-//                         <button
-//                           onClick={() => onEdit?.(blog)}
-//                           className="action-btn w-7 h-7 rounded-lg bg-gray-50 text-gray-500 hover:bg-amber-50 hover:text-amber-600 flex items-center justify-center"
-//                           title="Edit"
-//                         >
-//                           <SquarePen size={12} />
-//                         </button>
-//                         <button
-//                           onClick={() => openDeleteModal(blog)}
-//                           className="action-btn w-7 h-7 rounded-lg bg-gray-50 text-gray-500 hover:bg-red-50 hover:text-red-600 flex items-center justify-center"
-//                           title="Delete"
-//                         >
-//                           <Trash2 size={12} />
-//                         </button>
-//                       </div>
-//                     </td>
-//                   </tr>
-//                 ))
-//               )}
-//             </tbody>
-//           </table>
-//         </div>
-//       </div>
-
-//       {/* Delete Confirmation Modal */}
-//       {deleteModal.open && (
-//         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-//           {/* Backdrop */}
-//           <div
-//             className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in"
-//             onClick={closeDeleteModal}
-//           />
-
-//           {/* Modal */}
-//           <div className="relative bg-white rounded-2xl shadow-xl max-w-md w-full p-6 animate-fade-in-up">
-//             <div className="flex items-start gap-4">
-//               <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
-//                 <AlertTriangle size={22} className="text-red-500" />
-//               </div>
-//               <div className="flex-1">
-//                 <h3 className="text-lg font-bold text-gray-800">
-//                   Delete Blog Post
-//                 </h3>
-//                 <p className="text-sm text-gray-500 mt-1">
-//                   Are you sure you want to delete this blog post? This action
-//                   cannot be undone.
-//                 </p>
-//                 {deleteModal.blog && (
-//                   <div className="mt-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
-//                     <p className="text-sm font-medium text-gray-700 line-clamp-1">
-//                       {deleteModal.blog.title}
-//                     </p>
-//                     <p className="text-xs text-gray-400 mt-0.5 capitalize">
-//                       {deleteModal.blog.category || 'Uncategorized'} •{' '}
-//                       {deleteModal.blog.status || 'unknown'}
-//                     </p>
-//                   </div>
-//                 )}
-//               </div>
-//             </div>
-
-//             <div className="flex items-center justify-end gap-3 mt-6">
-//               <button
-//                 onClick={closeDeleteModal}
-//                 disabled={deleting}
-//                 className="px-4 py-2.5 rounded-xl text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-//               >
-//                 Cancel
-//               </button>
-//               <button
-//                 onClick={confirmDelete}
-//                 disabled={deleting}
-//                 className="px-4 py-2.5 rounded-xl text-sm font-medium text-white bg-red-500 hover:bg-red-600 transition-all shadow-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-//               >
-//                 {deleting ? (
-//                   <>
-//                     <Loader2 size={14} className="animate-spin" />
-//                     Deleting...
-//                   </>
-//                 ) : (
-//                   <>
-//                     <Trash2 size={14} />
-//                     Delete
-//                   </>
-//                 )}
-//               </button>
-//             </div>
-//           </div>
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
-
 'use client';
 import { useState, useEffect } from 'react';
 import api from '@/axios';
@@ -362,37 +9,46 @@ import {
   RefreshCw,
   Loader2,
   AlertTriangle,
-  ThumbsUp,
-  ThumbsDown,
-  Tag,
   Calendar,
   Circle,
   Heading,
-  AlignLeft,
-  Image as ImageIcon,
   Save,
   Info,
+  IndianRupee,
+  CreditCard,
+  FileText,
+  Clock,
+  Star,
   CheckCircle,
+  XCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 
-export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refreshKey }) {
-  const [blogs, setBlogs] = useState([]);
+export default function SubTable({ onDelete, onEdit, addToast, refreshKey }) {
+  const [subscriptions, setSubscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [deleteModal, setDeleteModal] = useState({ open: false, blog: null });
-  const [viewModal, setViewModal] = useState({ open: false, blog: null });
-  const [editModal, setEditModal] = useState({ open: false, blog: null });
+  const [deleteModal, setDeleteModal] = useState({ open: false, sub: null });
+  const [viewModal, setViewModal] = useState({ open: false, sub: null });
+  const [editModal, setEditModal] = useState({ open: false, sub: null });
   const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Edit form state
   const [editForm, setEditForm] = useState({
+    plan_name: '',
+    plan_key: '',
     title: '',
-    category: '',
-    status: '',
-    excerpt: '',
-    image: '',
+    price: '',
+    original_price: '',
+    period: 'month',
+    duration_days: '',
+    currency: 'INR',
+    tag_label: '',
+    tag_color: '#4CAF50',
+    popular: false,
+    is_active: true,
+    featuresText: '',
   });
 
   const getToken = () =>
@@ -413,29 +69,46 @@ export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refr
     }
   };
 
-  const makeSlug = (title = '') =>
-    title
+  const formatCurrency = (amount, currency = 'INR') => {
+    const num = Number(amount);
+    if (isNaN(num)) return '₹ 0.00';
+    const symbol =
+      currency === 'INR' ? '₹' : currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency;
+    return `${symbol} ${num.toFixed(2)}`;
+  };
+
+  const makePlanKey = (name = '') =>
+    name
       .toLowerCase()
       .trim()
       .replace(/[^a-z0-9\s-]/g, '')
       .replace(/\s+/g, '-')
-      .slice(0, 40) || 'blog-post';
+      .slice(0, 40) || 'plan-key';
 
-  const fetchBlogs = async () => {
+  // ---------- FETCH PLANS ----------
+  const fetchSubscriptions = async () => {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await api.get('/api/blog/allblogs');
-      if (!data?.success) {
-        throw new Error(data?.message || 'Failed to load blogs');
+      const { data } = await api.get('/api/plan/allplans');
+
+      const list =
+        data?.data ||
+        data?.plans ||
+        data?.subscriptions ||
+        (Array.isArray(data) ? data : []);
+
+      if (data?.success === false) {
+        throw new Error(data?.message || 'Failed to load plans');
       }
-      setBlogs(data.blogs || []);
+
+      setSubscriptions(Array.isArray(list) ? list : []);
     } catch (err) {
-      console.error('Error fetching blogs:', err);
+      console.error('Error fetching plans:', err);
       const msg =
         err.response?.data?.message ||
         err.message ||
-        'Failed to load blogs. Please try again.';
+        'Failed to load plans. Please try again.';
       setError(msg);
       if (addToast) addToast(msg, 'error');
     } finally {
@@ -444,138 +117,160 @@ export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refr
   };
 
   useEffect(() => {
-    fetchBlogs();
+    fetchSubscriptions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshKey]);
 
   // ---------- STATUS BADGE ----------
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case 'published':
-        return (
-          <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-[11px] font-semibold">
-            <span className="w-[7px] h-[7px] rounded-full bg-emerald-500" />
-            Published
-          </span>
-        );
-      case 'draft':
-        return (
-          <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 px-3 py-1 rounded-full text-[11px] font-semibold">
-            <span className="w-[7px] h-[7px] rounded-full bg-amber-500 animate-dot-blink" />
-            Draft
-          </span>
-        );
-      case 'archived':
-        return (
-          <span className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-[11px] font-semibold">
-            <span className="w-[7px] h-[7px] rounded-full bg-slate-400" />
-            Archived
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center gap-1.5 bg-slate-50 text-slate-700 px-3 py-1 rounded-full text-[11px] font-semibold capitalize">
-            <span className="w-[7px] h-[7px] rounded-full bg-slate-400" />
-            {status || 'unknown'}
-          </span>
-        );
+  const getStatusBadge = (isActive) => {
+    if (isActive === true) {
+      return (
+        <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-[11px] font-semibold">
+          <span className="w-[7px] h-[7px] rounded-full bg-emerald-500" />
+          Active
+        </span>
+      );
     }
+    return (
+      <span className="inline-flex items-center gap-1.5 bg-red-50 text-red-700 px-3 py-1 rounded-full text-[11px] font-semibold">
+        <span className="w-[7px] h-[7px] rounded-full bg-red-500" />
+        Inactive
+      </span>
+    );
   };
 
   // ---------- OPEN MODALS ----------
-  const openViewModal = (blog) => setViewModal({ open: true, blog });
-  const openEditModal = (blog) => {
-    setEditForm({
-      title: blog.title || '',
-      category: blog.category || '',
-      status: blog.status || 'draft',
-      excerpt: blog.excerpt || '',
-      image: blog.image || '',
-    });
-    setEditModal({ open: true, blog });
-  };
-  const openDeleteModal = (blog) => setDeleteModal({ open: true, blog });
+  const openViewModal = (sub) => setViewModal({ open: true, sub });
 
-  const closeViewModal = () => setViewModal({ open: false, blog: null });
+  // Opens edit modal directly with plan data — no second form
+  const openEditModal = (sub) => {
+    setEditForm({
+      plan_name: sub.plan_name || '',
+      plan_key: sub.plan_key || '',
+      title: sub.title || '',
+      price: sub.price ?? '',
+      original_price: sub.original_price ?? '',
+      period: sub.period || 'month',
+      duration_days: sub.duration_days ?? '',
+      currency: sub.currency || 'INR',
+      tag_label: sub.tag_label || '',
+      tag_color: sub.tag_color || '#4CAF50',
+      popular: !!sub.popular,
+      is_active: sub.is_active ?? true,
+      featuresText: Array.isArray(sub.features) ? sub.features.join(', ') : '',
+    });
+    setEditModal({ open: true, sub });
+  };
+
+  const openDeleteModal = (sub) => setDeleteModal({ open: true, sub });
+
+  const closeViewModal = () => setViewModal({ open: false, sub: null });
   const closeEditModal = () => {
     if (saving) return;
-    setEditModal({ open: false, blog: null });
+    setEditModal({ open: false, sub: null });
   };
   const closeDeleteModal = () => {
     if (deleting) return;
-    setDeleteModal({ open: false, blog: null });
+    setDeleteModal({ open: false, sub: null });
   };
 
-  // ---------- CONFIRM DELETE ----------
+  // ---------- CONFIRM DELETE (uses sub.id from response) ----------
   const confirmDelete = async () => {
-    const blog = deleteModal.blog;
-    if (!blog) return;
+    const sub = deleteModal.sub;
+    if (!sub) return;
 
     setDeleting(true);
     try {
       const token = getToken();
-      const { data } = await api.delete(`/api/blog/delete/${blog.id}`, {
+      const { data } = await api.delete(`/api/plan/deleteplan/${sub.id}`, {
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
 
-      if (!data?.success) {
-        throw new Error(data?.message || 'Failed to delete blog');
+      if (data && data.success === false) {
+        throw new Error(data?.message || 'Failed to delete plan');
       }
 
-      if (addToast) addToast(data?.message || 'Blog deleted successfully', 'success');
-      setBlogs((prev) => prev.filter((b) => b.id !== blog.id));
-      if (onDelete) onDelete(blog.id);
-      setDeleteModal({ open: false, blog: null });
+      if (addToast) addToast(data?.message || 'Plan deleted successfully', 'success');
+
+      // Update local state
+      setSubscriptions((prev) => prev.filter((s) => s.id !== sub.id));
+
+      // Also call parent handler if provided
+      if (onDelete) onDelete(sub.id);
+
+      setDeleteModal({ open: false, sub: null });
     } catch (err) {
-      console.error('Error deleting blog:', err);
+      console.error('Error deleting plan:', err);
       const msg =
         err.response?.data?.message ||
         err.message ||
-        'Failed to delete blog. Please try again.';
+        'Failed to delete plan. Please try again.';
       if (addToast) addToast(msg, 'error');
     } finally {
       setDeleting(false);
     }
   };
 
-  // ---------- SAVE EDIT ----------
+  // ---------- SAVE EDIT (uses sub.id from response) ----------
   const confirmEdit = async () => {
-    const blog = editModal.blog;
-    if (!blog) return;
+    const sub = editModal.sub;
+    if (!sub) return;
 
     setSaving(true);
     try {
       const token = getToken();
+
+      const featuresArray = editForm.featuresText
+        .split(',')
+        .map((f) => f.trim())
+        .filter(Boolean);
+
       const payload = {
+        plan_name: editForm.plan_name,
+        plan_key: editForm.plan_key || makePlanKey(editForm.plan_name),
         title: editForm.title,
-        category: editForm.category,
-        status: editForm.status,
-        excerpt: editForm.excerpt,
-        image: editForm.image,
+        price: Number(editForm.price) || 0,
+        original_price: Number(editForm.original_price) || 0,
+        period: editForm.period,
+        duration_days: Number(editForm.duration_days) || 0,
+        currency: editForm.currency,
+        tag_label: editForm.tag_label || null,
+        tag_color: editForm.tag_color,
+        popular: Boolean(editForm.popular),
+        is_active: Boolean(editForm.is_active),
+        features: featuresArray,
       };
 
-      const { data } = await api.put(`/api/blog/editblog/${blog.id}`, payload);
+      const { data } = await api.put(`/api/plan/updateplan/${sub.id}`, payload, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
 
-      if (!data?.success) {
-        throw new Error(data?.message || 'Failed to update blog');
+      if (data && data.success === false) {
+        throw new Error(data?.message || 'Failed to update plan');
       }
 
-      if (addToast) addToast(data?.message || 'Blog updated successfully', 'success');
+      if (addToast) addToast(data?.message || 'Plan updated successfully', 'success');
 
-      // Update local state
-      setBlogs((prev) =>
-        prev.map((b) => (b.id === blog.id ? { ...b, ...payload } : b))
+      // Update local state with server response or payload
+      const updated = data?.data || { ...sub, ...payload };
+      setSubscriptions((prev) =>
+        prev.map((s) => (s.id === sub.id ? { ...s, ...updated } : s))
       );
 
-      setEditModal({ open: false, blog: null });
+      // Also call parent handler if provided
+      if (onEdit) onEdit({ id: sub.id, ...payload });
+
+      setEditModal({ open: false, sub: null });
     } catch (err) {
-      console.error('Error updating blog:', err);
+      console.error('Error updating plan:', err);
       const msg =
         err.response?.data?.message ||
         err.message ||
-        'Failed to update blog. Please try again.';
+        'Failed to update plan. Please try again.';
       if (addToast) addToast(msg, 'error');
     } finally {
       setSaving(false);
@@ -588,18 +283,18 @@ export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refr
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-7">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <span className="bg-blue-50 text-blue-600 p-2.5 rounded-2xl">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>
+            <span className="bg-purple-50 text-purple-600 p-2.5 rounded-2xl">
+              <CreditCard size={24} />
             </span>
-            Blog Posts
+            Subscription Plans
           </h2>
           <p className="text-sm text-slate-500 mt-1.5">
-            Manage all your blog articles, track engagement & publishing status.
+            Manage all subscription plans, pricing & features.
           </p>
         </div>
         <div className="mt-4 md:mt-0 flex items-center gap-2.5">
           <button
-            onClick={fetchBlogs}
+            onClick={fetchSubscriptions}
             disabled={loading}
             className="border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300 px-4 py-2.5 rounded-2xl text-sm font-medium transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
             title="Refresh"
@@ -608,10 +303,10 @@ export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refr
             Refresh
           </button>
           <Link
-            href={"/Dashboard/add-blog"}
+            href="/Dashboard/add-subscription"
             className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-2xl text-sm font-semibold transition-all shadow-lg shadow-slate-900/20 hover:shadow-slate-900/30 hover:-translate-y-0.5 flex items-center gap-2"
           >
-            <Plus size={16} /> Add New Post
+            <Plus size={16} /> Add Plan
           </Link>
         </div>
       </div>
@@ -619,127 +314,170 @@ export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refr
       {/* ---------- TABLE ---------- */}
       <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[950px] whitespace-nowrap">
+          <table className="w-full text-left border-collapse min-w-[1000px] whitespace-nowrap">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-100 text-[11px] uppercase tracking-wider text-slate-500 font-bold">
                 <th className="px-6 py-4 w-16">#</th>
+                <th className="px-4 py-4">Plan</th>
                 <th className="px-4 py-4">Title</th>
-                <th className="px-4 py-4">Category</th>
+                <th className="px-4 py-4">Price</th>
+                <th className="px-4 py-4">Period</th>
+                <th className="px-4 py-4">Duration</th>
+                <th className="px-4 py-4">Features</th>
                 <th className="px-4 py-4">Status</th>
-                <th className="px-4 py-4">Likes / Dislikes</th>
-                <th className="px-4 py-4">Date</th>
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-slate-400">
+                  <td colSpan={9} className="px-6 py-12 text-center text-slate-400">
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 size={18} className="animate-spin" />
-                      <span>Loading blogs...</span>
+                      <span>Loading plans...</span>
                     </div>
                   </td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center">
+                  <td colSpan={9} className="px-6 py-12 text-center">
                     <p className="text-red-500 mb-3">{error}</p>
                     <button
-                      onClick={fetchBlogs}
+                      onClick={fetchSubscriptions}
                       className="text-sm text-blue-600 hover:text-blue-800 font-medium"
                     >
                       Try again
                     </button>
                   </td>
                 </tr>
-              ) : blogs.length === 0 ? (
+              ) : subscriptions.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-slate-400">
-                    No records found
+                  <td colSpan={9} className="px-6 py-12 text-center text-slate-400">
+                    No plans found
                   </td>
                 </tr>
               ) : (
-                blogs.map((blog, index) => (
+                subscriptions.map((sub, index) => (
                   <tr
-                    key={blog.id}
-                    className="group relative bg-white transition-all duration-300 ease-out hover:bg-gradient-to-r hover:from-white hover:to-blue-50/30 hover:shadow-[0_12px_30px_-12px_rgba(0,0,0,0.15),0_0_0_1px_rgba(59,130,246,0.1)] hover:-translate-y-0.5 hover:scale-[1.001]"
+                    key={sub.id ?? index}
+                    className="group relative bg-white transition-all duration-300 ease-out hover:bg-gradient-to-r hover:from-white hover:to-purple-50/30 hover:shadow-[0_12px_30px_-12px_rgba(0,0,0,0.15),0_0_0_1px_rgba(147,51,234,0.1)] hover:-translate-y-0.5"
                   >
-                    {/* Left accent bar on hover */}
-                    <td className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 via-purple-500 to-pink-500 rounded-r opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <td className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-purple-500 via-indigo-500 to-blue-500 rounded-r opacity-0 group-hover:opacity-100 transition-opacity" />
 
                     <td className="px-6 py-4">
                       <span className="font-semibold text-slate-400">
                         {String(index + 1).padStart(2, '0')}
                       </span>
                     </td>
+
                     <td className="px-4 py-4">
-                      <div className="flex items-center gap-3.5">
-                        <img
-                          src={
-                            blog.image ||
-                            'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=60'
-                          }
-                          alt={blog.title}
-                          className="w-10 h-10 rounded-xl object-cover border border-slate-200 shadow-sm transition-transform group-hover:scale-105 group-hover:border-blue-200"
-                          onError={(e) => {
-                            e.currentTarget.src =
-                              'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=60';
-                          }}
-                        />
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-sm">
+                          {(sub.plan_name || 'P').charAt(0).toUpperCase()}
+                        </div>
                         <div className="flex flex-col">
-                          <span className="font-semibold text-slate-800 line-clamp-1 max-w-[220px]">
-                            {blog.title}
-                          </span>
-                          <span className="text-[11px] text-slate-400 truncate">
-                            {blog.slug || makeSlug(blog.title)}
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-slate-800">
+                              {sub.plan_name || '—'}
+                            </span>
+                            {sub.popular && (
+                              <span className="inline-flex items-center gap-0.5 bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-md text-[10px] font-bold">
+                                <Star size={9} /> POPULAR
+                              </span>
+                            )}
+                            {sub.tag_label && (
+                              <span
+                                className="px-1.5 py-0.5 rounded-md text-[10px] font-bold text-white"
+                                style={{ backgroundColor: sub.tag_color || '#4CAF50' }}
+                              >
+                                {sub.tag_label}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[11px] text-slate-400 truncate max-w-[160px]">
+                            {sub.plan_key || makePlanKey(sub.plan_name)}
                           </span>
                         </div>
                       </div>
                     </td>
+
                     <td className="px-4 py-4">
-                      <span className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-[11px] font-semibold capitalize">
-                        <Tag size={10} />
-                        {blog.category || '—'}
+                      <span className="text-slate-600 text-xs truncate max-w-[180px] inline-block">
+                        {sub.title || '—'}
                       </span>
                     </td>
-                    <td className="px-4 py-4">{getStatusBadge(blog.status)}</td>
+
                     <td className="px-4 py-4">
-                      <div className="flex items-center gap-4">
-                        <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-2 py-1 rounded-full text-xs font-semibold">
-                          <ThumbsUp size={12} className="transition-transform hover:scale-125" />
-                          {blog.likes ?? 0}
+                      <div className="flex flex-col">
+                        <span className="inline-flex items-center gap-1 font-bold text-slate-800">
+                          {formatCurrency(sub.price, sub.currency)}
                         </span>
-                        <span className="inline-flex items-center gap-1.5 bg-red-50 text-red-700 px-2 py-1 rounded-full text-xs font-semibold">
-                          <ThumbsDown size={12} className="transition-transform hover:scale-125" />
-                          {blog.dislikes ?? 0}
-                        </span>
+                        {sub.original_price && Number(sub.original_price) > 0 && (
+                          <span className="text-[11px] text-slate-400 line-through">
+                            {formatCurrency(sub.original_price, sub.currency)}
+                          </span>
+                        )}
                       </div>
                     </td>
-                    <td className="px-4 py-4 text-slate-500 text-xs font-medium">
-                      <span className="inline-flex items-center gap-1.5">
-                        <Calendar size={12} className="text-slate-400" />
-                        {formatDate(blog.published_at || blog.created_at)}
+
+                    <td className="px-4 py-4">
+                      <span className="inline-flex items-center gap-1 text-slate-600 text-xs font-medium capitalize">
+                        <Clock size={11} className="text-slate-400" />
+                        {sub.period || '—'}
                       </span>
                     </td>
+
+                    <td className="px-4 py-4">
+                      <span className="text-slate-600 text-xs font-medium">
+                        {sub.duration_days ? `${sub.duration_days} days` : '—'}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-4">
+                      <div className="flex flex-wrap gap-1 max-w-[200px]">
+                        {Array.isArray(sub.features) && sub.features.length > 0 ? (
+                          <>
+                            {sub.features.slice(0, 2).map((f, i) => (
+                              <span
+                                key={i}
+                                className="inline-block bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md text-[10px] font-medium truncate max-w-[90px]"
+                                title={f}
+                              >
+                                {f}
+                              </span>
+                            ))}
+                            {sub.features.length > 2 && (
+                              <span className="inline-block bg-purple-50 text-purple-600 px-2 py-0.5 rounded-md text-[10px] font-bold">
+                                +{sub.features.length - 2}
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-slate-300 text-xs">—</span>
+                        )}
+                      </div>
+                    </td>
+
+                    <td className="px-4 py-4">{getStatusBadge(sub.is_active)}</td>
+
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
                         <button
-                          onClick={() => openViewModal(blog)}
+                          onClick={() => openViewModal(sub)}
                           className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 hover:border-blue-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-200/50 transition-all flex items-center justify-center"
                           title="View"
                         >
                           <Eye size={15} />
                         </button>
                         <button
-                          onClick={() => openEditModal(blog)}
+                          onClick={() => openEditModal(sub)}
                           className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100 hover:border-amber-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-amber-200/50 transition-all flex items-center justify-center"
                           title="Edit"
                         >
                           <SquarePen size={15} />
                         </button>
                         <button
-                          onClick={() => openDeleteModal(blog)}
+                          onClick={() => openDeleteModal(sub)}
                           className="w-9 h-9 rounded-xl bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 hover:border-red-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-red-200/50 transition-all flex items-center justify-center"
                           title="Delete"
                         >
@@ -756,7 +494,7 @@ export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refr
       </div>
 
       {/* ========== VIEW MODAL ========== */}
-      {viewModal.open && viewModal.blog && (
+      {viewModal.open && viewModal.sub && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm animate-fade-in"
@@ -768,49 +506,107 @@ export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refr
                 <Eye size={26} className="text-blue-600" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-slate-800">View Post</h3>
-                <p className="text-sm text-slate-500">Preview details</p>
+                <h3 className="text-xl font-bold text-slate-800">View Plan</h3>
+                <p className="text-sm text-slate-500">Preview plan details</p>
               </div>
             </div>
 
             <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 flex items-center gap-4">
-              <img
-                src={viewModal.blog.image}
-                alt={viewModal.blog.title}
-                className="w-16 h-16 rounded-2xl object-cover border border-slate-200"
-                onError={(e) => {
-                  e.currentTarget.src =
-                    'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=60';
-                }}
-              />
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white font-bold text-2xl flex-shrink-0">
+                {(viewModal.sub.plan_name || 'P').charAt(0).toUpperCase()}
+              </div>
               <div className="flex-1">
-                <div className="font-bold text-slate-800 text-base">
-                  {viewModal.blog.title}
-                </div>
-                <div className="flex items-center gap-3 mt-1.5 text-xs text-slate-500">
-                  <span className="inline-flex items-center gap-1">
-                    <Tag size={10} /> {viewModal.blog.category || '—'}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-bold text-slate-800 text-base">
+                    {viewModal.sub.plan_name || '—'}
                   </span>
-                  <span className="inline-flex items-center gap-1">
-                    <Calendar size={10} />
-                    {formatDate(viewModal.blog.published_at || viewModal.blog.created_at)}
-                  </span>
+                  {viewModal.sub.popular && (
+                    <span className="inline-flex items-center gap-0.5 bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-md text-[10px] font-bold">
+                      <Star size={9} /> POPULAR
+                    </span>
+                  )}
+                  {viewModal.sub.tag_label && (
+                    <span
+                      className="px-1.5 py-0.5 rounded-md text-[10px] font-bold text-white"
+                      style={{ backgroundColor: viewModal.sub.tag_color || '#4CAF50' }}
+                    >
+                      {viewModal.sub.tag_label}
+                    </span>
+                  )}
                 </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  {viewModal.sub.title || '—'}
+                </p>
                 <div className="flex items-center gap-4 mt-2.5">
-                  <span className="inline-flex items-center gap-1 text-emerald-600 font-semibold text-xs">
-                    <ThumbsUp size={12} /> {viewModal.blog.likes ?? 0}
+                  <span className="inline-flex items-center gap-1 text-slate-700 font-bold text-sm">
+                    <IndianRupee size={12} />
+                    {Number(viewModal.sub.price || 0).toFixed(2)}
                   </span>
-                  <span className="inline-flex items-center gap-1 text-red-600 font-semibold text-xs">
-                    <ThumbsDown size={12} /> {viewModal.blog.dislikes ?? 0}
-                  </span>
+                  <span className="text-xs text-slate-500">/ {viewModal.sub.period}</span>
+                  {getStatusBadge(viewModal.sub.is_active)}
                 </div>
               </div>
             </div>
 
-            {viewModal.blog.excerpt && (
-              <p className="mt-4 text-sm text-slate-600 leading-relaxed">
-                {viewModal.blog.excerpt}
-              </p>
+            <div className="mt-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1">
+                    Plan Key
+                  </p>
+                  <p className="text-slate-700 font-medium truncate">
+                    {viewModal.sub.plan_key || makePlanKey(viewModal.sub.plan_name)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1">
+                    Duration
+                  </p>
+                  <p className="text-slate-700 font-medium">
+                    {viewModal.sub.duration_days || 0} days
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1">
+                    Original Price
+                  </p>
+                  <p className="text-slate-700 font-medium line-through">
+                    {formatCurrency(viewModal.sub.original_price, viewModal.sub.currency)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1">
+                    Currency
+                  </p>
+                  <p className="text-slate-700 font-medium">
+                    {viewModal.sub.currency || 'INR'}
+                  </p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1">
+                    Created
+                  </p>
+                  <p className="text-slate-700 font-medium">
+                    {formatDate(viewModal.sub.created_at)}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {Array.isArray(viewModal.sub.features) && viewModal.sub.features.length > 0 && (
+              <div className="mt-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <p className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-2">
+                  Features ({viewModal.sub.features.length})
+                </p>
+                <ul className="space-y-1.5">
+                  {viewModal.sub.features.map((f, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
+                      <CheckCircle size={14} className="text-emerald-500 mt-0.5 flex-shrink-0" />
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
 
             <div className="flex items-center justify-end gap-3 mt-6">
@@ -822,9 +618,9 @@ export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refr
               </button>
               <button
                 onClick={() => {
-                  const b = viewModal.blog;
+                  const s = viewModal.sub;
                   closeViewModal();
-                  setTimeout(() => openEditModal(b), 200);
+                  setTimeout(() => openEditModal(s), 200);
                 }}
                 className="px-5 py-2.5 rounded-2xl text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 transition-all shadow-md hover:-translate-y-0.5 flex items-center gap-2"
               >
@@ -835,109 +631,210 @@ export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refr
         </div>
       )}
 
-      {/* ========== EDIT MODAL ========== */}
-      {editModal.open && editModal.blog && (
+      {/* ========== EDIT MODAL (single form) ========== */}
+      {editModal.open && editModal.sub && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm animate-fade-in"
             onClick={closeEditModal}
           />
-          <div className="relative bg-white rounded-3xl shadow-2xl max-w-xl w-full p-7 animate-modal-in max-h-[90vh] overflow-y-auto">
+          <div className="relative bg-white rounded-3xl shadow-2xl max-w-2xl w-full p-7 animate-modal-in max-h-[90vh] overflow-y-auto">
             <div className="flex items-center gap-4 mb-5">
               <div className="w-14 h-14 rounded-2xl bg-amber-100 flex items-center justify-center flex-shrink-0">
                 <SquarePen size={26} className="text-amber-600" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-slate-800">Edit Post</h3>
-                <p className="text-sm text-slate-500">Update blog information</p>
+                <h3 className="text-xl font-bold text-slate-800">Edit Plan</h3>
+                <p className="text-sm text-slate-500">Update plan information</p>
               </div>
             </div>
 
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                  <Heading size={12} className="text-blue-500" /> Title
+                  <Heading size={12} className="text-purple-500" /> Plan Name
+                </label>
+                <input
+                  type="text"
+                  value={editForm.plan_name}
+                  onChange={(e) => setEditForm({ ...editForm, plan_name: e.target.value })}
+                  placeholder="Plan name"
+                  className="px-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 outline-none text-sm text-slate-800 transition-all"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                  <FileText size={12} className="text-purple-500" /> Title
                 </label>
                 <input
                   type="text"
                   value={editForm.title}
                   onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                  placeholder="Blog title"
-                  className="px-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none text-sm text-slate-800 transition-all"
+                  placeholder="Short description title"
+                  className="px-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 outline-none text-sm text-slate-800 transition-all"
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                    <Tag size={12} className="text-blue-500" /> Category
+                    <FileText size={12} className="text-purple-500" /> Plan Key
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.plan_key}
+                    onChange={(e) => setEditForm({ ...editForm, plan_key: e.target.value })}
+                    placeholder="plan-key"
+                    className="px-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 outline-none text-sm text-slate-800 transition-all"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                    <Circle size={12} className="text-purple-500" /> Currency
                   </label>
                   <select
-                    value={editForm.category}
-                    onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
-                    className="px-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none text-sm text-slate-800 transition-all bg-white"
+                    value={editForm.currency}
+                    onChange={(e) => setEditForm({ ...editForm, currency: e.target.value })}
+                    className="px-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 outline-none text-sm text-slate-800 transition-all bg-white"
                   >
-                    <option value="">Select category</option>
-                    <option value="Design">Design</option>
-                    <option value="Development">Development</option>
-                    <option value="AI & Tech">AI & Tech</option>
-                    <option value="Marketing">Marketing</option>
+                    <option value="INR">INR (₹)</option>
+                    <option value="USD">USD ($)</option>
+                    <option value="EUR">EUR (€)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                    <IndianRupee size={12} className="text-purple-500" /> Price
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={editForm.price}
+                    onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
+                    placeholder="0.00"
+                    className="px-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 outline-none text-sm text-slate-800 transition-all"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                    <IndianRupee size={12} className="text-purple-500" /> Original Price
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={editForm.original_price}
+                    onChange={(e) => setEditForm({ ...editForm, original_price: e.target.value })}
+                    placeholder="0.00"
+                    className="px-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 outline-none text-sm text-slate-800 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                    <Clock size={12} className="text-purple-500" /> Period
+                  </label>
+                  <select
+                    value={editForm.period}
+                    onChange={(e) => setEditForm({ ...editForm, period: e.target.value })}
+                    className="px-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 outline-none text-sm text-slate-800 transition-all bg-white"
+                  >
+                    <option value="day">Day</option>
+                    <option value="week">Week</option>
+                    <option value="month">Month</option>
+                    <option value="year">Year</option>
                   </select>
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                    <Circle size={12} className="text-blue-500" /> Status
+                    <Calendar size={12} className="text-purple-500" /> Duration (days)
                   </label>
-                  <select
-                    value={editForm.status}
-                    onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
-                    className="px-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none text-sm text-slate-800 transition-all bg-white"
-                  >
-                    <option value="published">Published</option>
-                    <option value="draft">Draft</option>
-                    <option value="archived">Archived</option>
-                  </select>
+                  <input
+                    type="number"
+                    value={editForm.duration_days}
+                    onChange={(e) => setEditForm({ ...editForm, duration_days: e.target.value })}
+                    placeholder="30"
+                    className="px-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 outline-none text-sm text-slate-800 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-slate-700">Tag Label</label>
+                  <input
+                    type="text"
+                    value={editForm.tag_label}
+                    onChange={(e) => setEditForm({ ...editForm, tag_label: e.target.value })}
+                    placeholder="e.g. Popular"
+                    className="px-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 outline-none text-sm text-slate-800 transition-all"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-slate-700">Tag Color</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={editForm.tag_color}
+                      onChange={(e) => setEditForm({ ...editForm, tag_color: e.target.value })}
+                      className="w-12 h-12 rounded-xl border-2 border-slate-200 cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={editForm.tag_color}
+                      onChange={(e) => setEditForm({ ...editForm, tag_color: e.target.value })}
+                      className="flex-1 px-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 outline-none text-sm text-slate-800 transition-all"
+                    />
+                  </div>
                 </div>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                  <AlignLeft size={12} className="text-blue-500" /> Excerpt
+                <label className="text-xs font-semibold text-slate-700">
+                  Features (comma separated)
                 </label>
                 <textarea
-                  value={editForm.excerpt}
-                  onChange={(e) => setEditForm({ ...editForm, excerpt: e.target.value })}
-                  placeholder="Short description..."
                   rows={3}
-                  className="px-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none text-sm text-slate-800 transition-all resize-y"
+                  value={editForm.featuresText}
+                  onChange={(e) => setEditForm({ ...editForm, featuresText: e.target.value })}
+                  placeholder="Unlimited access, Best offers, Priority support"
+                  className="px-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 outline-none text-sm text-slate-800 transition-all resize-none"
                 />
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                  <ImageIcon size={12} className="text-blue-500" /> Image URL
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <label className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border-2 border-slate-200 cursor-pointer hover:border-purple-300 transition-all">
+                  <input
+                    type="checkbox"
+                    checked={editForm.popular}
+                    onChange={(e) => setEditForm({ ...editForm, popular: e.target.checked })}
+                    className="w-4 h-4 accent-purple-600"
+                  />
+                  <span className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">
+                    <Star size={14} className="text-amber-500" /> Mark as Popular
+                  </span>
                 </label>
-                <input
-                  type="text"
-                  value={editForm.image}
-                  onChange={(e) => setEditForm({ ...editForm, image: e.target.value })}
-                  placeholder="https://..."
-                  className="px-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none text-sm text-slate-800 transition-all"
-                />
-                {editForm.image && (
-                  <div className="flex items-center gap-3 mt-1.5">
-                    <img
-                      src={editForm.image}
-                      alt="preview"
-                      className="w-12 h-12 rounded-xl object-cover border border-slate-200"
-                      onError={(e) => {
-                        e.currentTarget.src =
-                          'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=60';
-                      }}
-                    />
-                    <span className="text-xs text-slate-500">Current image</span>
-                  </div>
-                )}
+                <label className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border-2 border-slate-200 cursor-pointer hover:border-purple-300 transition-all">
+                  <input
+                    type="checkbox"
+                    checked={editForm.is_active}
+                    onChange={(e) => setEditForm({ ...editForm, is_active: e.target.checked })}
+                    className="w-4 h-4 accent-emerald-600"
+                  />
+                  <span className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">
+                    {editForm.is_active ? (
+                      <CheckCircle size={14} className="text-emerald-500" />
+                    ) : (
+                      <XCircle size={14} className="text-red-500" />
+                    )}
+                    Active
+                  </span>
+                </label>
               </div>
             </div>
 
@@ -970,7 +867,7 @@ export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refr
       )}
 
       {/* ========== DELETE MODAL ========== */}
-      {deleteModal.open && deleteModal.blog && (
+      {deleteModal.open && deleteModal.sub && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm animate-fade-in"
@@ -982,34 +879,27 @@ export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refr
                 <AlertTriangle size={26} className="text-red-600" />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-slate-800">Delete Post</h3>
+                <h3 className="text-xl font-bold text-slate-800">Delete Plan</h3>
                 <p className="text-sm text-slate-500 mt-1">
-                  Are you sure you want to delete this blog post? This action cannot
-                  be undone.
+                  Are you sure you want to delete this plan? This action cannot be undone.
                 </p>
                 <div className="mt-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-3">
-                  <img
-                    src={deleteModal.blog.image}
-                    alt={deleteModal.blog.title}
-                    className="w-12 h-12 rounded-xl object-cover border border-slate-200"
-                    onError={(e) => {
-                      e.currentTarget.src =
-                        'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=60';
-                    }}
-                  />
-                  <div>
-                    <p className="text-sm font-semibold text-slate-700 line-clamp-1">
-                      {deleteModal.blog.title}
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                    {(deleteModal.sub.plan_name || 'P').charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-slate-700 truncate">
+                      {deleteModal.sub.plan_name || 'Untitled Plan'}
                     </p>
                     <p className="text-xs text-slate-400 mt-0.5 capitalize flex items-center gap-2">
-                      <span>{deleteModal.blog.category || 'Uncategorized'}</span>
+                      <span>{formatCurrency(deleteModal.sub.price, deleteModal.sub.currency)}</span>
                       <span>•</span>
-                      <span>{deleteModal.blog.status || 'unknown'}</span>
+                      <span>{deleteModal.sub.period}</span>
                     </p>
                   </div>
                 </div>
                 <p className="mt-4 text-sm text-red-700 font-medium flex items-center gap-2">
-                  <Info size={14} /> This will permanently remove the post.
+                  <Info size={14} /> This will permanently remove the plan.
                 </p>
               </div>
             </div>
@@ -1042,24 +932,8 @@ export default function BlogTable({ onAddClick, onEdit, onDelete, addToast, refr
         </div>
       )}
 
-      {/* ---------- CUSTOM CSS (blink dot + animations) ---------- */}
+      {/* ---------- CUSTOM CSS ---------- */}
       <style jsx global>{`
-        @keyframes dotBlink {
-          0%, 100% {
-            opacity: 1;
-            transform: scale(1);
-            box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
-          }
-          50% {
-            opacity: 0.45;
-            transform: scale(0.78);
-            box-shadow: 0 0 0 5px rgba(245, 158, 11, 0);
-          }
-        }
-        .animate-dot-blink {
-          animation: dotBlink 1.4s ease-in-out infinite;
-        }
-
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }
