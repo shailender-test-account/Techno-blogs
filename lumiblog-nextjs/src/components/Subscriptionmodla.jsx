@@ -150,7 +150,7 @@ export default function SubscriptionModal() {
   const user=useSelector((state)=>state.auth?.currentuser)
 
   const userId = user?.id || user?._id || user?.userId || null;
-  console.log("my user id",userId)
+ 
 
   const [mounted, setMounted] = useState(false);
   const [animateIn, setAnimateIn] = useState(false);

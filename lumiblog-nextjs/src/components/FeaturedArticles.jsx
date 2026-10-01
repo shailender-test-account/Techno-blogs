@@ -17,7 +17,7 @@ import Link from "next/link";
 
 const CATEGORIES = [
   { name: "Travel", icon: "fa-plane", color: "blue" },
-   { name: "Technology", icon: "fa-gear", color: "teal" },
+  { name: "Technology", icon: "fa-gear", color: "teal" },
   { name: "Lifestyle", icon: "fa-mug-hot", color: "pink" },
   { name: "Wellness", icon: "fa-leaf", color: "green" },
   { name: "Personal Growth", icon: "fa-book-open", color: "purple" },
@@ -49,11 +49,7 @@ const formatDate = (dateStr) => {
 };
 
 
-const handelsubscriptionmodel = () => {
-  setTimeout(() => {
-    dispatch(openSubscriptionModal());
-  }, 2500 + 300);
-}
+
 
 const estimateReadTime = (content = "") => {
   const words = content.trim().split(/\s+/).filter(Boolean).length;
@@ -131,8 +127,8 @@ function BlogDetailModal({ blog, onClose }) {
       {/* Modal card */}
       <div
         className={`relative w-full max-w-3xl max-h-[92vh] overflow-hidden rounded-3xl bg-white shadow-2xl transition-all duration-500 ease-out ${active
-            ? "opacity-100 translate-y-0 scale-100"
-            : "opacity-0 translate-y-8 scale-95"
+          ? "opacity-100 translate-y-0 scale-100"
+          : "opacity-0 translate-y-8 scale-95"
           }`}
       >
         <button
@@ -156,8 +152,8 @@ function BlogDetailModal({ blog, onClose }) {
 
             <span
               className={`absolute top-4 left-4 bg-white/95 backdrop-blur-sm text-brand-pink text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider shadow-lg transition-all duration-500 delay-150 ${active
-                  ? "opacity-100 translate-x-0"
-                  : "opacity-0 -translate-x-4"
+                ? "opacity-100 translate-x-0"
+                : "opacity-0 -translate-x-4"
                 }`}
             >
               {blog.category}
@@ -166,8 +162,8 @@ function BlogDetailModal({ blog, onClose }) {
             <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-7">
               <h2
                 className={`text-xl sm:text-3xl font-bold text-white leading-tight drop-shadow-lg transition-all duration-500 delay-200 ${active
-                    ? "opacity-100 translate-y-0"
-                    : "opacity-0 translate-y-4"
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-4"
                   }`}
               >
                 {blog.title}
@@ -178,8 +174,8 @@ function BlogDetailModal({ blog, onClose }) {
           {/* Meta */}
           <div
             className={`flex flex-wrap items-center justify-between gap-4 px-5 sm:px-7 py-4 border-b border-gray-100 transition-all duration-500 delay-300 ${active
-                ? "opacity-100 translate-y-0"
-                : "opacity-0 translate-y-4"
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-4"
               }`}
           >
             <div className="flex items-center gap-3">
@@ -213,8 +209,8 @@ function BlogDetailModal({ blog, onClose }) {
           {/* Body */}
           <div
             className={`px-5 sm:px-7 py-6 transition-all duration-500 ${active
-                ? "opacity-100 translate-y-0"
-                : "opacity-0 translate-y-4"
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-4"
               }`}
             style={{ transitionDelay: "400ms" }}
           >
@@ -420,6 +416,13 @@ export default function FeaturedArticles() {
     };
   }, [activeCategory, fetchBlogs]);
 
+
+  const handelsubscriptionmodel = () => {
+    setTimeout(() => {
+      dispatch(openSubscriptionModal());
+    }, 2500 + 300);
+  }
+
   const card1 = blogs[0];
   const card2 = blogs[1];
   const card3 = blogs[2];
@@ -466,7 +469,7 @@ export default function FeaturedArticles() {
             </div>
             <Link
               href="#"
-              
+
               onClick={handelsubscriptionmodel}
               className="text-brand-pink font-medium hover:text-rose-600 transition flex items-center gap-2 text-sm sm:text-base"
             >
@@ -696,8 +699,8 @@ export default function FeaturedArticles() {
                         key={cat.name}
                         onClick={() => setActiveCategory(cat.name)}
                         className={`flex items-center justify-between group cursor-pointer rounded-xl px-3 py-2 transition ${isActive
-                            ? "bg-brand-pink/5 ring-1 ring-brand-pink/30"
-                            : "hover:bg-gray-50"
+                          ? "bg-brand-pink/5 ring-1 ring-brand-pink/30"
+                          : "hover:bg-gray-50"
                           }`}
                       >
                         <div className="flex items-center gap-3">
@@ -711,8 +714,8 @@ export default function FeaturedArticles() {
                           </div>
                           <span
                             className={`font-medium transition text-sm sm:text-base ${isActive
-                                ? "text-brand-pink"
-                                : "text-brand-dark group-hover:text-brand-pink"
+                              ? "text-brand-pink"
+                              : "text-brand-dark group-hover:text-brand-pink"
                               }`}
                           >
                             {cat.name}
